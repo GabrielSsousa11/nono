@@ -1,0 +1,42 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+/Assets/Plugins/Editor/JetBrains*
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+crashlytics-build.properties
+*.apk
+*.aab
+*.unitypackage
+
+# IDE / gerados pela Unity
+.vs/
+.vscode/
+.idea/
+*.csproj
+!Tools/**/*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+
+# Ferramentas .NET (testes fora da Unity)
+Tools/**/bin/
+Tools/**/obj/
+Tools/**/TestResults/
+
+# Credenciais — NUNCA versionar
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+Assets/StreamingAssets/google-services-desktop.json

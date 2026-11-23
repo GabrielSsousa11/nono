@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d512b0870aab915754fc9328db19652, type: 3}
+  m_Name: GameDatabase
+  m_EditorClassIdentifier: 
+  newGameConfig:
+    PlayerCompanyName: Empire Holdings
+    StartingCashUnits: 250000
+    SecondsPerTick: 0.5
+    MaxTicksPerFrame: 12
+    StartHour: 8
+    City:
+      CityName: Nova Aurora
+      Seed: 20261123
+      BlocksX: 7
+      BlocksY: 7
+      BlockSize: 6
+      AmbientDensity:
+      - 0.7
+      - 0.45
+      - 0.35
+      - 0.55
+      - 0
+      ParkChance: 0.08
+    Economy:
+      LandPricePerCell:
+      - 900
+      - 1400
+      - 700
+      - 2600
+      - 0
+      CentralityBonus: 0.6
+      LandSaleRatio: 0.8
+      TransferTaxRate: 0.03
+      PropertyTaxRatePerYear: 0.012
+      DemolitionRefundRatio: 0.25
+  buildings:
+  - {fileID: 11400000, guid: 28f480d0879dd811f4d0a2cef2f4413e, type: 2}
+  - {fileID: 11400000, guid: 9cdb4ca8cc9ccb1544aaccaed6fa5779, type: 2}
+  - {fileID: 11400000, guid: 7b7fcc092bab9b068e7368902e26c0f5, type: 2}
+  - {fileID: 11400000, guid: 94799cb03ad3b9e469b30131c5c2c70b, type: 2}
+  - {fileID: 11400000, guid: 488fb41dce08cf9bf7b21091932e7d6a, type: 2}
+  litMaterialTemplate: {fileID: 0}
+  cellSize: 4
