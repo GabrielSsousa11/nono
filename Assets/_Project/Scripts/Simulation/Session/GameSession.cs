@@ -13,35 +13,59 @@ namespace EmpireTycoon.Simulation.Session
     /// Toda alteração de estado do jogo passa pelos comandos públicos desta classe,
     /// que validam as regras antes de executar (Can* / Execute*).
     /// </summary>
-    public sealed class GameSession
+    public sealed partial class GameSession
     {
         public readonly GameConfig Config;
         public readonly EventBus Events = new EventBus();
         public readonly SimulationClock Clock;
         public readonly CityMap City;
+        public readonly CityLayoutConfig CityLayout;
+        public readonly CityStats Stats = new CityStats();
         public readonly BuildingCatalog Catalog;
         public readonly LandMarket LandMarket;
         public readonly Company Player;
+
+        private readonly CityGrowth _growth;
+        private readonly List<Lot> _developmentScratch = new List<Lot>();
 
         private readonly Dictionary<int, Company> _companies = new Dictionary<int, Company>();
         private readonly Dictionary<int, BuildingInstance> _buildings = new Dictionary<int, BuildingInstance>();
         private readonly List<BuildingInstance> _busyScratch = new List<BuildingInstance>();
         private int _nextBuildingId = 1;
 
+        /// <summary>Nova partida.</summary>
         public GameSession(GameConfig config, IEnumerable<BuildingDefinition> definitions)
+            : this(config, definitions, null, null)
+        {
+        }
+
+        /// <param name="snapshot">Quando informado, restaura a partida salva em vez de começar uma nova.</param>
+        /// <param name="loadWarnings">Recebe avisos não fatais do carregamento (ex.: conteúdo removido do jogo).</param>
+        private GameSession(GameConfig config, IEnumerable<BuildingDefinition> definitions, SaveSystem.GameSnapshot snapshot, List<string> loadWarnings)
         {
             Config = config ?? throw new ArgumentNullException(nameof(config));
             Config.Validate();
+            CityLayout = snapshot != null ? snapshot.City : Config.City;
+            CityLayout.Validate();
             Catalog = new BuildingCatalog(definitions);
             LandMarket = new LandMarket(Config.Economy);
-            Clock = new SimulationClock(Config.SecondsPerTick, Config.MaxTicksPerFrame, Config.StartHour);
-            City = CityGenerator.Generate(0, Config.City);
+            Clock = new SimulationClock(Config.SecondsPerTick, Config.MaxTicksPerFrame, snapshot != null ? snapshot.TotalTicks : Config.StartHour);
+            City = CityGenerator.Generate(0, CityLayout);
+            _growth = new CityGrowth(City, Config.Growth, snapshot != null ? snapshot.GrowthRngState : CityLayout.Seed ^ 0x5DEECE66DUL);
 
-            Player = AddCompany(new Company(0, Config.PlayerCompanyName, isPlayer: true));
-            Player.Credit(Config.StartingCash, TransactionCategory.InitialCapital, Clock.TotalTicks, "Capital inicial");
-
-            var starter = FindStarterLot();
-            if (starter != null) AssignOwnership(starter, Player.Id);
+            if (snapshot == null)
+            {
+                Player = AddCompany(new Company(0, Config.PlayerCompanyName, isPlayer: true));
+                Player.Credit(Config.StartingCash, TransactionCategory.InitialCapital, Clock.TotalTicks, "Capital inicial");
+                var starter = FindStarterLot();
+                if (starter != null) AssignOwnership(starter, Player.Id);
+                LandMarket.RecomputeNeighborhood(City);
+            }
+            else
+            {
+                Player = ApplySnapshot(snapshot, loadWarnings ?? new List<string>());
+            }
+            Stats.Recompute(City);
         }
 
         public IEnumerable<Company> Companies => _companies.Values;
@@ -74,8 +98,18 @@ namespace EmpireTycoon.Simulation.Session
         public void StepTick()
         {
             ProgressConstruction();
+            ProgressCityDevelopment();
             Clock.CommitTick();
             if (Clock.Hour == 0) OnNewDay();
+        }
+
+        private void ProgressCityDevelopment()
+        {
+            _developmentScratch.Clear();
+            _growth.TickHour(_developmentScratch);
+            if (_developmentScratch.Count == 0) return;
+            Stats.Recompute(City);
+            foreach (var lot in _developmentScratch) Events.Publish(new LotDevelopmentChanged(lot.Id, completed: true));
         }
 
         /// <summary>Processa N horas de jogo imediatamente (ferramentas de teste/balanceamento).</summary>
@@ -123,6 +157,13 @@ namespace EmpireTycoon.Simulation.Session
             }
 
             foreach (var c in _companies.Values) c.Ledger.EnsureDay(Clock.TotalDays);
+
+            // Cidade: novos empreendimentos particulares e valorização dos bairros (preços estáveis ao longo do dia).
+            Stats.Recompute(City);
+            var developing = _growth.TryStartDevelopment(Stats);
+            LandMarket.RecomputeNeighborhood(City);
+            Stats.Recompute(City);
+            if (developing != null) Events.Publish(new LotDevelopmentChanged(developing.Id, completed: false));
             Events.Publish(new DayStarted(Clock.TotalDays));
         }
 

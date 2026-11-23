@@ -34,6 +34,11 @@ namespace EmpireTycoon.Runtime.Rendering
         private readonly List<Mesh> _ownedMeshes = new List<Mesh>();
         private readonly Dictionary<string, ModelMesh> _helperMeshes = new Dictionary<string, ModelMesh>();
         private readonly MeshBuilder _builder = new MeshBuilder();
+        private readonly List<GameObject> _releaseScratch = new List<GameObject>();
+        private RendererPool _pool;
+
+        /// <summary>Prédios mais altos que isso ganham LOD (versão simplificada quando ocupam pouco da tela).</summary>
+        private const float LodMinHeight = 9f;
 
         private Mesh _unitTile;
         private Transform _lotsRoot;
@@ -58,7 +63,10 @@ namespace EmpireTycoon.Runtime.Rendering
             public Transform CraneJib;
             public int ShownBuildingId = Lot.NoBuilding;
             public int ShownLevel;
-            public BuildingState ShownState;
+            public int ShownSiteState = -1;
+            public AmbientStructure ShownAmbient;
+            public int ShownAmbientFloors;
+            public float AmbientHeight;
             public float TargetHeight;
             public Quaternion Facing;
             public Bounds PickBounds;
@@ -71,6 +79,9 @@ namespace EmpireTycoon.Runtime.Rendering
             _materials = materials;
             _models = models;
             _map = new CityGridMapping(session.City.Width, session.City.Height, db.cellSize);
+            var poolRoot = new GameObject("Pool").transform;
+            poolRoot.SetParent(transform, false);
+            _pool = new RendererPool(poolRoot);
 
             BuildTerrain();
             BuildRoadsAndBlocks();
@@ -91,7 +102,11 @@ namespace EmpireTycoon.Runtime.Rendering
                 var b = session.GetBuilding(e.BuildingId);
                 if (b != null) RefreshLot(b.LotId);
             }));
+            _subscriptions.Add(session.Events.Subscribe<LotDevelopmentChanged>(e => RefreshLot(e.LotId)));
         }
+
+        /// <summary>Estatística do pool (diagnóstico de desempenho).</summary>
+        public string PoolStats => "renderers criados: " + _pool.CreatedCount + ", livres: " + _pool.FreeCount;
 
         private void OnDestroy()
         {
@@ -111,16 +126,21 @@ namespace EmpireTycoon.Runtime.Rendering
             if (_busyLots.Count > 0)
             {
                 float tickFrac = _session.Clock.Speed == GameSpeed.Paused ? 0f : _session.Clock.TickProgress;
+                int devHours = Mathf.Max(1, _session.Config.Growth.DevelopmentHours);
                 foreach (int lotId in _busyLots)
                 {
                     var view = _lots[lotId];
-                    var b = _session.GetBuildingOnLot(view.Lot);
-                    if (b == null || view.Building == null) continue;
-                    if (b.State == BuildingState.UnderConstruction)
+                    var lot = view.Lot;
+                    var b = _session.GetBuildingOnLot(lot);
+                    if (b != null && view.Building != null && b.State == BuildingState.UnderConstruction)
                     {
                         float p = Mathf.Clamp01((b.WorkDoneHours + tickFrac) / Mathf.Max(1, b.WorkTotalHours));
-                        var s = view.Building.transform.localScale;
-                        view.Building.transform.localScale = new Vector3(s.x, Mathf.Lerp(0.03f, 1f, p), s.z);
+                        SetHeightScale(view.Building, p);
+                    }
+                    else if (lot.IsUnderDevelopment && view.Ambient != null)
+                    {
+                        float p = Mathf.Clamp01((devHours - lot.DevelopmentHoursLeft + tickFrac) / devHours);
+                        SetHeightScale(view.Ambient, p);
                     }
                     if (view.CraneJib != null)
                         view.CraneJib.localRotation = Quaternion.Euler(0f, Mathf.Sin(t * 0.35f + lotId) * 75f, 0f);
@@ -172,7 +192,9 @@ namespace EmpireTycoon.Runtime.Rendering
                 return;
             }
 
-            foreach (Transform child in _selectionMarker) if (child != _selectionArrow) Destroy(child.gameObject);
+            _releaseScratch.Clear();
+            foreach (Transform child in _selectionMarker) if (child != _selectionArrow) _releaseScratch.Add(child.gameObject);
+            foreach (var go in _releaseScratch) _pool.Release(go);
             var size = _map.RectSize(lot.Rect);
             var frame = GetHelper("sel|" + size.x + "x" + size.y, b => b.AddFrame(MaterialSlot.Accent, Vector3.zero, size.x - 0.1f, size.y - 0.1f, 0.45f, 0.35f));
             CreateRenderer("Frame", _selectionMarker, frame, SelectionPalette(), ShadowCastingMode.Off);
@@ -229,31 +251,35 @@ namespace EmpireTycoon.Runtime.Rendering
             view.Tile = tile.AddComponent<MeshRenderer>();
             view.Tile.shadowCastingMode = ShadowCastingMode.Off;
 
-            if (lot.IsAmbient) view.Ambient = CreateAmbient(lot, root.transform, size, view.Facing);
-
             _lots.Add(lot.Id, view);
             RefreshLot(lot.Id);
         }
 
-        private GameObject CreateAmbient(Lot lot, Transform parent, Vector2 lotSize, Quaternion facing)
+        private static string AmbientStyle(AmbientStructure type)
         {
-            string style;
-            switch (lot.Ambient)
+            switch (type)
             {
-                case AmbientStructure.House: style = BuildingModelFactory.House; break;
-                case AmbientStructure.Apartment: style = BuildingModelFactory.Apartment; break;
-                case AmbientStructure.OfficeTower: style = BuildingModelFactory.OfficeTower; break;
-                case AmbientStructure.Shop: style = BuildingModelFactory.AmbientShop; break;
-                case AmbientStructure.Warehouse: style = BuildingModelFactory.AmbientWarehouse; break;
-                case AmbientStructure.Park: style = BuildingModelFactory.Park; break;
+                case AmbientStructure.House: return BuildingModelFactory.House;
+                case AmbientStructure.Apartment: return BuildingModelFactory.Apartment;
+                case AmbientStructure.OfficeTower: return BuildingModelFactory.OfficeTower;
+                case AmbientStructure.Shop: return BuildingModelFactory.AmbientShop;
+                case AmbientStructure.Warehouse: return BuildingModelFactory.AmbientWarehouse;
+                case AmbientStructure.Park: return BuildingModelFactory.Park;
                 default: return null;
             }
-            var fp = new Vector2(lotSize.x - BuildingMargin * 2, lotSize.y - BuildingMargin * 2);
+        }
+
+        private GameObject CreateAmbient(LotView view)
+        {
+            var lot = view.Lot;
+            string style = AmbientStyle(lot.Ambient);
+            if (style == null) return null;
             int variant = lot.Ambient == AmbientStructure.Park ? lot.Id : lot.AmbientFloors;
-            var model = _models.Get(style, 1, fp, variant);
-            var go = CreateRenderer("Ambient_" + lot.Ambient, parent, model, WorldPalette.AmbientPalette(lot.Id, lot.Ambient), ShadowCastingMode.On);
+            var go = CreateModel("Ambient_" + lot.Ambient, view.Root.transform, style, 1, Footprint(view), variant,
+                WorldPalette.AmbientPalette(lot.Id, lot.Ambient), out float height);
+            view.AmbientHeight = height;
             go.transform.localPosition = new Vector3(0, LotTop, 0);
-            go.transform.localRotation = facing;
+            go.transform.localRotation = view.Facing;
             return go;
         }
 
@@ -299,61 +325,81 @@ namespace EmpireTycoon.Runtime.Rendering
             }
             if (view.SaleSign != null) view.SaleSign.SetActive(showSale);
 
-            RefreshBuilding(view);
+            RefreshStructures(view);
             UpdatePickBounds(view);
             if (lotId == _selectedLotId) SetSelectedLot(lotId);
         }
 
         // ------------------------------------------------------------------ Estabelecimentos
 
-        private void RefreshBuilding(LotView view)
+        /// <summary>Sincroniza estrutura de fundo, estabelecimento e canteiro de obras de um terreno.</summary>
+        private void RefreshStructures(LotView view)
         {
-            var b = _session.GetBuildingOnLot(view.Lot);
+            var lot = view.Lot;
+
+            // Estruturas de fundo (inclui empreendimentos particulares do crescimento da cidade).
+            if (lot.IsAmbient && (view.Ambient == null || view.ShownAmbient != lot.Ambient || view.ShownAmbientFloors != lot.AmbientFloors))
+            {
+                Release(ref view.Ambient);
+                view.Ambient = CreateAmbient(view);
+                view.ShownAmbient = lot.Ambient;
+                view.ShownAmbientFloors = lot.AmbientFloors;
+            }
+            if (!lot.IsAmbient) Release(ref view.Ambient);
+            if (view.Ambient != null && !lot.IsUnderDevelopment) view.Ambient.transform.localScale = Vector3.one;
+
+            // Estabelecimento de uma empresa.
+            var b = _session.GetBuildingOnLot(lot);
             if (b == null)
             {
-                DestroyBuildingVisuals(view);
-                return;
+                Release(ref view.Building);
+                view.ShownBuildingId = Lot.NoBuilding;
+            }
+            else
+            {
+                if (view.Building == null || view.ShownBuildingId != b.Id || view.ShownLevel != b.Level)
+                {
+                    Release(ref view.Building);
+                    view.Building = CreateBuildingModel(b, view);
+                    view.ShownBuildingId = b.Id;
+                    view.ShownLevel = b.Level;
+                }
+                if (b.State == BuildingState.Operational) view.Building.transform.localScale = Vector3.one;
             }
 
-            if (view.Building == null || view.ShownBuildingId != b.Id || view.ShownLevel != b.Level)
+            // Canteiro de obras (estabelecimento em obra/reforma ou empreendimento particular).
+            bool busy = (b != null && b.IsBusy) || lot.IsUnderDevelopment;
+            int siteState = b != null ? (int)b.State : lot.IsUnderDevelopment ? 100 : -1;
+            if (busy && (view.Site == null || view.ShownSiteState != siteState))
             {
-                if (view.Building != null) Destroy(view.Building);
-                view.Building = CreateBuildingModel(b, view);
-                view.ShownBuildingId = b.Id;
-                view.ShownLevel = b.Level;
-            }
-
-            if (b.State == BuildingState.Operational)
-                view.Building.transform.localScale = Vector3.one;
-
-            bool busy = b.IsBusy;
-            if (busy && (view.Site == null || view.ShownState != b.State))
-            {
-                if (view.Site != null) Destroy(view.Site);
-                float h = b.State == BuildingState.Upgrading ? EstimateHeight(b, b.Level + 1, view) : view.TargetHeight;
+                Release(ref view.Site);
+                float h = b != null
+                    ? (b.State == BuildingState.Upgrading ? EstimateHeight(b, b.Level + 1, view) : view.TargetHeight)
+                    : view.AmbientHeight;
                 view.Site = CreateConstructionSite(view, Mathf.Max(h, 3f));
             }
             if (!busy && view.Site != null)
             {
-                Destroy(view.Site);
-                view.Site = null;
+                Release(ref view.Site);
                 view.CraneJib = null;
             }
-            view.ShownState = b.State;
+            view.ShownSiteState = siteState;
 
-            if (busy) _busyLots.Add(view.Lot.Id);
-            else _busyLots.Remove(view.Lot.Id);
+            if (busy) _busyLots.Add(lot.Id);
+            else _busyLots.Remove(lot.Id);
         }
 
-        private void DestroyBuildingVisuals(LotView view)
+        private void Release(ref GameObject go)
         {
-            if (view.Building != null) Destroy(view.Building);
-            if (view.Site != null) Destroy(view.Site);
-            view.Building = null;
-            view.Site = null;
-            view.CraneJib = null;
-            view.ShownBuildingId = Lot.NoBuilding;
-            _busyLots.Remove(view.Lot.Id);
+            if (go == null) return;
+            _pool.Release(go);
+            go = null;
+        }
+
+        private static void SetHeightScale(GameObject go, float progress01)
+        {
+            var s = go.transform.localScale;
+            go.transform.localScale = new Vector3(s.x, Mathf.Lerp(0.03f, 1f, progress01), s.z);
         }
 
         private Vector2 Footprint(LotView view)
@@ -384,12 +430,11 @@ namespace EmpireTycoon.Runtime.Rendering
             }
             else
             {
-                var model = _models.Get(b.Definition.VisualKey, b.Level, Footprint(view), 0);
                 var palette = asset != null
                     ? ModelPalette.Create(asset.wallColor, asset.roofColor, asset.accentColor)
                     : ModelPalette.Create(Color.white, Color.gray, WorldPalette.PlayerBrand);
-                go = CreateRenderer("Building_" + b.Definition.Id, view.Root.transform, model, palette, ShadowCastingMode.On);
-                view.TargetHeight = model.Height;
+                go = CreateModel("Building_" + b.Definition.Id, view.Root.transform, b.Definition.VisualKey, b.Level, Footprint(view), 0, palette, out float height);
+                view.TargetHeight = height;
             }
             go.transform.localPosition = new Vector3(0, LotTop, 0);
             go.transform.localRotation = view.Facing;
@@ -500,7 +545,7 @@ namespace EmpireTycoon.Runtime.Rendering
         private void BuildRoadsAndBlocks()
         {
             var city = _session.City;
-            int stride = _session.Config.City.BlockSize + 1;
+            int stride = _session.CityLayout.BlockSize + 1;
             float cs = _map.CellSize;
 
             var model = BuildMesh(b =>
@@ -536,9 +581,9 @@ namespace EmpireTycoon.Runtime.Rendering
                 }
 
                 // Calçadas: um bloco elevado por quarteirão.
-                int bs = _session.Config.City.BlockSize;
-                for (int by = 0; by < _session.Config.City.BlocksY; by++)
-                for (int bx = 0; bx < _session.Config.City.BlocksX; bx++)
+                int bs = _session.CityLayout.BlockSize;
+                for (int by = 0; by < _session.CityLayout.BlocksY; by++)
+                for (int bx = 0; bx < _session.CityLayout.BlocksX; bx++)
                 {
                     var center = _map.GridToWorld(bx * stride + 1 + bs * 0.5f, by * stride + 1 + bs * 0.5f);
                     b.AddBox(MaterialSlot.Ground, center, new Vector3(bs * cs, SidewalkTop, bs * cs));
@@ -554,7 +599,7 @@ namespace EmpireTycoon.Runtime.Rendering
 
         private void BuildOutskirtsNature()
         {
-            var rng = new DeterministicRandom(_session.Config.City.Seed ^ 0xA5A5UL);
+            var rng = new DeterministicRandom(_session.CityLayout.Seed ^ 0xA5A5UL);
             var bounds = _map.WorldBounds;
             float inner = Mathf.Max(bounds.extents.x, bounds.extents.z) + 6f;
             float outer = inner + 70f;
@@ -603,15 +648,28 @@ namespace EmpireTycoon.Runtime.Rendering
 
         private GameObject CreateRenderer(string name, Transform parent, ModelMesh model, ModelPalette palette, ShadowCastingMode shadows)
         {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            go.AddComponent<MeshFilter>().sharedMesh = model.Mesh;
-            var r = go.AddComponent<MeshRenderer>();
-            r.sharedMaterials = _materials.ForSlots(model.Slots, palette);
-            r.shadowCastingMode = shadows;
-            r.lightProbeUsage = LightProbeUsage.Off;
-            r.reflectionProbeUsage = ReflectionProbeUsage.Off;
-            return go;
+            return _pool.Get(name, parent, model.Mesh, _materials.ForSlots(model.Slots, palette), shadows);
+        }
+
+        /// <summary>Instancia um modelo procedural; prédios altos recebem LODGroup com versão simplificada.</summary>
+        private GameObject CreateModel(string name, Transform parent, string style, int level, Vector2 footprint, int variant, ModelPalette palette, out float height)
+        {
+            var detailed = _models.Get(style, level, footprint, variant);
+            height = detailed.Height;
+            if (height < LodMinHeight || !BuildingModelFactory.SupportsLod(style)) return CreateRenderer(name, parent, detailed, palette, ShadowCastingMode.On);
+
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            var lod0 = CreateRenderer("LOD0", root.transform, detailed, palette, ShadowCastingMode.On);
+            var lod1 = CreateRenderer("LOD1", root.transform, _models.GetLod(style, level, footprint, variant), palette, ShadowCastingMode.On);
+            var group = root.AddComponent<LODGroup>();
+            group.SetLODs(new[]
+            {
+                new LOD(0.14f, new Renderer[] { lod0.GetComponent<MeshRenderer>() }),
+                new LOD(0.01f, new Renderer[] { lod1.GetComponent<MeshRenderer>() }),
+            });
+            group.RecalculateBounds();
+            return root;
         }
     }
 }

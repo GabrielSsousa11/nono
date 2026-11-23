@@ -6,6 +6,10 @@ using EmpireTycoon.Runtime.Interaction;
 using EmpireTycoon.Runtime.Quality;
 using EmpireTycoon.Runtime.Rendering;
 using EmpireTycoon.Runtime.UI;
+using System.Collections.Generic;
+using EmpireTycoon.Runtime.Persistence;
+using EmpireTycoon.Simulation.Core;
+using EmpireTycoon.Simulation.SaveSystem;
 using EmpireTycoon.Simulation.Session;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,8 +23,11 @@ namespace EmpireTycoon.Runtime.Bootstrap
     /// entrada e interface. Nenhum outro script cria sistemas globais.
     /// </summary>
     [DefaultExecutionOrder(-100)]
-    public sealed class GameBootstrap : MonoBehaviour
+    public sealed class GameBootstrap : MonoBehaviour, IGameFlow
     {
+        /// <summary>Intervalo do salvamento automático em segundos reais (além de ao minimizar/sair).</summary>
+        public const float AutosaveIntervalSeconds = 120f;
+
         [SerializeField] private GameDatabase database;
 
         private GameSession _session;
@@ -28,11 +35,17 @@ namespace EmpireTycoon.Runtime.Bootstrap
         private BuildingModelFactory _models;
         private CityView _cityView;
         private IsometricCameraController _camera;
+        private Camera _mainCamera;
         private SelectionController _selection;
         private PointerGestureInput _input;
         private GameUI _ui;
         private QualityPresetManager _quality;
+        private SaveController _saves;
         private string _fatalError;
+
+        /// <summary>O jogador saiu da tela inicial (novo jogo ou carregado). Antes disso nada é salvo.</summary>
+        private bool _gameStarted;
+        private float _autosaveTimer;
 
         public GameSession Session => _session;
 
@@ -45,9 +58,10 @@ namespace EmpireTycoon.Runtime.Bootstrap
                 return;
             }
 
+            GameSession firstSession;
             try
             {
-                _session = new GameSession(database.newGameConfig, database.CreateDefinitions());
+                firstSession = new GameSession(database.newGameConfig, database.CreateDefinitions());
             }
             catch (Exception e)
             {
@@ -61,30 +75,17 @@ namespace EmpireTycoon.Runtime.Bootstrap
             Screen.sleepTimeout = SleepTimeout.SystemSetting;
 
             SetupLighting();
-            var cam = SetupCamera();
+            _mainCamera = SetupCamera();
             EnsureEventSystem();
 
             _materials = new MaterialLibrary(database.litMaterialTemplate);
             _models = new BuildingModelFactory();
-
-            _cityView = new GameObject("City").AddComponent<CityView>();
-            _cityView.Initialize(_session, database, _materials, _models);
-
-            var starter = FindPlayerLot();
-            var focus = starter != null ? _cityView.Mapping.RectCenter(starter.Rect) : Vector3.zero;
-            _camera.Initialize(cam, _cityView.Mapping.WorldBounds, focus);
-
-            _selection = new SelectionController(_cityView, cam);
             _input = new PointerGestureInput();
+            _saves = new SaveController();
 
-            _ui = new GameObject("UI").AddComponent<GameUI>();
-            _ui.Initialize(_session, _selection, database, _quality);
-
-            if (starter != null)
-            {
-                _selection.Select(starter.Id);
-                _ui.Toasts.Show("Bem-vindo a " + _session.City.Name + "! Este é o seu primeiro terreno: construa seu negócio.", ToastKind.Info);
-            }
+            // A cidade de uma nova partida aparece ao fundo da tela inicial.
+            BuildWorld(firstSession);
+            _ui.ShowTitle();
         }
 
         private void Update()
@@ -92,18 +93,136 @@ namespace EmpireTycoon.Runtime.Bootstrap
             if (_session == null) return;
 
             var frame = _input.Poll();
-            if (frame.Back && !_ui.HandleBack()) _selection.Select(-1);
-            _camera.HandleInput(frame);
-            if (frame.Tap) _selection.HandleTap(frame.TapPosition);
+            if (frame.Back) _ui.HandleBack();
+            if (!_ui.IsModalOpen)
+            {
+                _camera.HandleInput(frame);
+                if (frame.Tap) _selection.HandleTap(frame.TapPosition);
+            }
 
             // Atualizações econômicas em ticks discretos (ver SimulationClock), independentes do FPS.
             _session.Advance(Mathf.Min(Time.unscaledDeltaTime, 0.25f));
+
+            if (_gameStarted)
+            {
+                _autosaveTimer += Time.unscaledDeltaTime;
+                if (_autosaveTimer >= AutosaveIntervalSeconds) Autosave();
+            }
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused) Autosave(); // Android: o app pode ser encerrado a qualquer momento em segundo plano
+        }
+
+        private void OnApplicationQuit() => Autosave();
+
+        private void Autosave()
+        {
+            _autosaveTimer = 0f;
+            if (!_gameStarted || _session == null) return;
+            string error = _saves.TrySave(_session, SaveController.AutoSlot);
+            if (error != null && _ui != null) _ui.Toasts.Show("Falha no salvamento automático: " + error, ToastKind.Error);
         }
 
         private void OnDestroy()
         {
             _materials?.DestroyAll();
             _models?.DestroyAll();
+        }
+
+        // ------------------------------------------------------------------ IGameFlow
+
+        public SaveSummary PeekSave(string slot) => _saves.Peek(slot);
+        public SaveSummary MostRecentSave() => _saves.MostRecent();
+
+        public void StartNewGame()
+        {
+            // Na tela inicial, a partida ao fundo já é uma nova partida intocada: basta começar.
+            if (_gameStarted)
+            {
+                BuildWorld(new GameSession(database.newGameConfig, database.CreateDefinitions()));
+            }
+            _ui.HideMenus();
+            _session.Clock.Speed = GameSpeed.Normal;
+            _gameStarted = true;
+            _autosaveTimer = 0f;
+            Autosave(); // o slot automático passa a refletir a nova partida
+
+            var starter = FindPlayerLot();
+            if (starter != null)
+            {
+                _selection.Select(starter.Id);
+                _ui.Toasts.Show("Bem-vindo a " + _session.City.Name + "! Este é o seu primeiro terreno: construa seu negócio.", ToastKind.Info);
+            }
+        }
+
+        public string LoadGame(string slot)
+        {
+            var result = _saves.Load(slot);
+            if (!result.Success) return result.ErrorMessage ?? "Save não encontrado.";
+
+            GameSession session;
+            var warnings = new List<string>();
+            try
+            {
+                session = GameSession.Restore(database.newGameConfig, database.CreateDefinitions(), result.Snapshot, warnings);
+            }
+            catch (SaveException e)
+            {
+                return e.Message;
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return "Erro inesperado ao carregar.";
+            }
+
+            BuildWorld(session);
+            _ui.HideMenus();
+            _gameStarted = true;
+            _autosaveTimer = 0f;
+            if (_session.Clock.Speed == GameSpeed.Paused) _session.Clock.Speed = GameSpeed.Normal;
+
+            foreach (var p in result.Problems) Debug.LogWarning("[EmpireTycoon] " + p);
+            foreach (var w in warnings) Debug.LogWarning("[EmpireTycoon] " + w);
+            if (result.FromBackup) _ui.Toasts.Show("O save estava danificado: progresso recuperado do backup.", ToastKind.Info);
+            else if (warnings.Count > 0) _ui.Toasts.Show(warnings[0], ToastKind.Info);
+            else _ui.Toasts.Show("Jogo carregado: " + _session.Player.Name, ToastKind.Success);
+            return null;
+        }
+
+        public string SaveGame(string slot) => _saves.TrySave(_session, slot);
+
+        public void QuitGame()
+        {
+            Autosave();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
+        // ------------------------------------------------------------------ Montagem do mundo
+
+        /// <summary>Substitui a partida atual: recria cidade 3D, seleção e interface para a nova sessão.</summary>
+        private void BuildWorld(GameSession session)
+        {
+            if (_cityView != null) Destroy(_cityView.gameObject);
+            if (_ui != null) Destroy(_ui.gameObject);
+
+            _session = session;
+            _cityView = new GameObject("City").AddComponent<CityView>();
+            _cityView.Initialize(_session, database, _materials, _models);
+
+            var starter = FindPlayerLot();
+            var focus = starter != null ? _cityView.Mapping.RectCenter(starter.Rect) : Vector3.zero;
+            _camera.Initialize(_mainCamera, _cityView.Mapping.WorldBounds, focus);
+
+            _selection = new SelectionController(_cityView, _mainCamera);
+            _ui = new GameObject("UI").AddComponent<GameUI>();
+            _ui.Initialize(_session, _selection, database, _quality, this);
         }
 
         private Simulation.WorldMap.Lot FindPlayerLot()

@@ -66,6 +66,19 @@ namespace EmpireTycoon.Simulation.Economy
             else report.Income += t.Amount;
         }
 
+        public IEnumerable<KeyValuePair<TransactionCategory, Money>> Totals => _totals;
+
+        /// <summary>Substitui todo o conteúdo (carregamento de save).</summary>
+        internal void Restore(IEnumerable<Transaction> recent, IEnumerable<DailyReport> days, IEnumerable<KeyValuePair<TransactionCategory, Money>> totals)
+        {
+            _recent.Clear();
+            _days.Clear();
+            _totals.Clear();
+            foreach (var t in recent) { _recent.AddLast(t); if (_recent.Count > MaxRecentTransactions) _recent.RemoveFirst(); }
+            foreach (var d in days) { _days.AddLast(d); if (_days.Count > MaxDailyReports) _days.RemoveFirst(); }
+            foreach (var kv in totals) _totals[kv.Key] = kv.Value;
+        }
+
         public DailyReport EnsureDay(long day)
         {
             var last = _days.Last?.Value;

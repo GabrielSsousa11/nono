@@ -52,6 +52,9 @@ namespace EmpireTycoon.Simulation.Economy
             Apply(amount, category, tick, description);
         }
 
+        /// <summary>Define o caixa diretamente (somente ao carregar um save; o livro-razão é restaurado junto).</summary>
+        internal void RestoreCash(Money cash) => Cash = cash;
+
         private void Apply(Money delta, TransactionCategory category, long tick, string description)
         {
             Cash += delta;

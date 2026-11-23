@@ -24,7 +24,9 @@ namespace EmpireTycoon.Runtime.UI
         private static readonly GameSpeed[] Speeds = { GameSpeed.Paused, GameSpeed.Normal, GameSpeed.Fast, GameSpeed.VeryFast };
         private static readonly string[] SpeedLabels = { "II", "1x", "3x", "8x" };
 
-        public HudView(RectTransform parent, GameSession session, QualityPresetManager quality)
+        private readonly Text _population;
+
+        public HudView(RectTransform parent, GameSession session, QualityPresetManager quality, System.Action openMenu)
         {
             _session = session;
             _quality = quality;
@@ -42,7 +44,7 @@ namespace EmpireTycoon.Runtime.UI
             // Bloco financeiro.
             var money = UIFactory.CreateRect("Money", bar.transform);
             UIFactory.AddVerticalLayout(money.gameObject, 0f).childAlignment = TextAnchor.MiddleLeft;
-            UIFactory.SetLayout(money, preferredWidth: 430f, flexibleWidth: 0f);
+            UIFactory.SetLayout(money, preferredWidth: 360f, flexibleWidth: 0f);
             _company = UIFactory.CreateText("Company", money, session.Player.Name, UITheme.FontSmall, UITheme.TextSecondary);
             _cash = UIFactory.CreateText("Cash", money, "", UITheme.FontLarge, UITheme.TextPrimary, TextAnchor.MiddleLeft, FontStyle.Bold);
 
@@ -51,13 +53,15 @@ namespace EmpireTycoon.Runtime.UI
             UIFactory.SetLayout(stats, flexibleWidth: 1f);
             _upkeep = UIFactory.CreateText("Upkeep", stats, "", UITheme.FontSmall, UITheme.TextSecondary);
             _assets = UIFactory.CreateText("Assets", stats, "", UITheme.FontSmall, UITheme.TextSecondary);
+            _population = UIFactory.CreateText("Population", stats, "", UITheme.FontSmall, UITheme.TextSecondary);
+            foreach (var line in new[] { _upkeep, _assets, _population }) line.horizontalOverflow = HorizontalWrapMode.Overflow;
 
-            _date = UIFactory.CreateText("Date", bar.transform, "", UITheme.FontBody, UITheme.TextPrimary, TextAnchor.MiddleCenter);
-            UIFactory.SetLayout(_date, preferredWidth: 420f, flexibleWidth: 0f);
+            _date = UIFactory.CreateText("Date", bar.transform, "", UITheme.FontSmall, UITheme.TextPrimary, TextAnchor.MiddleCenter);
+            UIFactory.SetLayout(_date, preferredWidth: 300f, flexibleWidth: 0f);
 
             var speeds = UIFactory.CreateRect("Speeds", bar.transform);
             UIFactory.AddHorizontalLayout(speeds.gameObject, 8f);
-            UIFactory.SetLayout(speeds, preferredWidth: 4 * 92f + 24f, flexibleWidth: 0f);
+            UIFactory.SetLayout(speeds, preferredWidth: 4 * 80f + 24f, flexibleWidth: 0f);
             for (int i = 0; i < Speeds.Length; i++)
             {
                 var speed = Speeds[i];
@@ -65,7 +69,9 @@ namespace EmpireTycoon.Runtime.UI
             }
 
             _qualityButton = UIFactory.CreateButton("Quality", bar.transform, "", UITheme.ButtonSecondary, CycleQuality, UITheme.FontSmall);
-            UIFactory.SetLayout(_qualityButton.Background, preferredWidth: 220f, flexibleWidth: 0f);
+            UIFactory.SetLayout(_qualityButton.Background, preferredWidth: 200f, flexibleWidth: 0f);
+            var menu = UIFactory.CreateButton("Menu", bar.transform, "Menu", UITheme.ButtonPrimary, () => openMenu());
+            UIFactory.SetLayout(menu.Background, preferredWidth: 140f, flexibleWidth: 0f);
 
             RefreshSpeedButtons();
             RefreshQualityLabel();
@@ -119,12 +125,14 @@ namespace EmpireTycoon.Runtime.UI
                 var last = player.Ledger.LastCompleteDay;
                 string net = last == null ? "" : "  ·  Ontem: " + UIFactory.Colorize(UIStrings.FormatMoneyShort(last.Net),
                     last.Net.IsNegative ? UITheme.TextNegative : UITheme.TextPositive);
-                _upkeep.text = "Custos fixos/dia: " + UIStrings.FormatMoneyShort(upkeep) + net;
+                _upkeep.text = "Custos/dia: " + UIStrings.FormatMoneyShort(upkeep) + net;
 
                 int lots = 0, buildings = 0;
                 foreach (var lot in _session.City.Lots) if (lot.OwnerId == player.Id) lots++;
                 foreach (var b in _session.Buildings) if (b.OwnerId == player.Id) buildings++;
-                _assets.text = "Terrenos: " + lots + "  ·  Estabelecimentos: " + buildings;
+                _assets.text = lots + (lots == 1 ? " terreno" : " terrenos") + "  ·  " + buildings + (buildings == 1 ? " estabelecimento" : " estabelecimentos");
+                var stats = _session.Stats;
+                _population.text = UIStrings.Number(stats.Residents) + " moradores  ·  " + UIStrings.Number(stats.Jobs) + " empregos";
             }
         }
     }

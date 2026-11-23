@@ -24,11 +24,11 @@ Também entregue na Fase 1 (base para as próximas):
 - Presets gráficos Baixo/Médio/Alto (URP) com detecção por hardware e meta 30/60 FPS.
 - HUD (caixa, custos fixos/dia, resultado de ontem, data, velocidade, qualidade), painel de terreno,
   menu de construção, diálogos de confirmação, notificações, área segura, botão voltar do Android.
-- 52 testes automatizados (simulação + validação dos dados reais + relatório de balanceamento).
+- 52 testes automatizados na entrega da Fase 1 (simulação + validação dos dados reais + relatório de balanceamento).
 
 ### Verificação realizada
 
-- `dotnet test Tools/SimulationTests` → **52/52 aprovados** (mesmos arquivos de teste do Test Runner da Unity).
+- `dotnet test Tools/SimulationTests` → aprovados (mesmos arquivos de teste do Test Runner da Unity).
 - A camada Unity foi compilada contra *stubs* da API (somente assinaturas) nos dois modos de entrada,
   sem erros — isso pega erros de C#, mas **não substitui** a compilação no Editor.
 - Os modelos 3D procedurais e o layout da cidade foram exportados do mesmo código C# e renderizados
@@ -39,12 +39,36 @@ Também entregue na Fase 1 (base para as próximas):
 ### Limitações conhecidas da Fase 1
 
 - Estabelecimentos ainda não produzem nem vendem: só têm custos. Receita chega na Fase 3 — o painel informa isso.
-- Sem salvamento ainda (planejado para a Fase 2): fechar o jogo reinicia a partida.
+- ~~Sem salvamento~~ → resolvido na Fase 2.
 - Modelos 3D procedurais provisórios (ver [ART_PIPELINE.md](ART_PIPELINE.md)); sem áudio; fonte padrão da Unity.
 
-## FASE 2 — Construção da cidade ⬜
-Salvamento local (automático/manual, versionado, backup, migração), nível de prédio com modelos distintos,
-ruas/terrenos com acesso validado, população e demanda por zona, pooling de objetos, LOD.
+## FASE 2 — Construção da cidade ✅ (desenvolvida sem Unity; validar junto com a Fase 1)
+
+| Item | Status | Onde |
+|---|---|---|
+| Salvamento automático | ✅ | a cada 2 min reais, ao minimizar o app (Android) e ao sair — `GameBootstrap` |
+| Salvamento manual e carregamento | ✅ | menu de pausa: Salvar / Carregar jogo salvo / Carregar automático |
+| Versionamento dos dados | ✅ | cabeçalho com versão do formato; saves de versão mais nova são recusados com mensagem clara |
+| Proteção contra corrupção | ✅ | CRC32 + escrita atômica (`.tmp` validado antes de substituir) |
+| Recuperação por backup | ✅ | 2 backups rotativos; save danificado → carrega o backup mais recente válido |
+| Migração de versões antigas | ✅ | cadeia de `SaveMigration` (testada com formatos simulados v1→v3) |
+| Nuvem como opcional | ✅ (arquitetura) | `SaveStorage` é local; a nuvem entrará como camada extra, nunca como requisito |
+| Cidade viva | ✅ | `CityGrowth`: moradores e empresas locais ocupam terrenos vagos (obra de 48 h visível), guiados por moradores × empregos; reserva mínima de 35% dos terrenos à venda por zona |
+| População e empregos | ✅ | `CityStats`, exibidos no HUD (base da demanda da Fase 3) |
+| Valorização por bairro | ✅ | ocupação da vizinhança + praças próximas, até +18%, recalculada à meia-noite; invariante anti-exploit validada na configuração |
+| Tela inicial e menu de pausa | ✅ | Continuar (save mais recente), Novo jogo, Gráficos; Retomar/Salvar/Carregar/Novo/Sair; botão voltar abre o menu |
+| Object pooling | ✅ | `RendererPool` reaproveita todos os objetos de malha da cidade |
+| LOD | ✅ | prédios de andares (escritórios, apartamentos, torres) com versão simplificada a distância |
+| Melhorias com visual distinto | ✅ | cada nível gera modelo diferente (já na Fase 1) |
+
+**Verificação:** 75 testes aprovados com `dotnet test`, incluindo: salvar → carregar → continuar produz
+exatamente o mesmo resultado que jogar sem parar (comparação byte a byte), corrupção/truncamento,
+recuperação por backup, migração, saves de versão futura, crescimento determinístico, nenhuma zona
+fica sem terrenos e valorização nunca permite lucro com revenda. A camada Unity compila contra stubs da
+API no perfil .NET Standard 2.1 (o da Unity), nos dois modos de entrada. Pendente: rodar no Editor.
+
+**Não incluído (decisão):** carregamento assíncrono com tela de loading — a cidade atual monta em um frame;
+será necessário quando houver várias cidades (Fase 7).
 
 ## FASE 3 — Economia e produção ⬜
 Mercadorias (ScriptableObjects), cadeias produtivas, estoques, preços por oferta/demanda com elasticidade,

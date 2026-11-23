@@ -65,6 +65,30 @@ namespace EmpireTycoon.Runtime.Rendering
             return model;
         }
 
+        /// <summary>Estilos cuja silhueta é bem representada por um volume único (prédios de andares).
+        /// Fábricas e galpões têm chaminés/tanques que distorceriam o volume simplificado.</summary>
+        public static bool SupportsLod(string style) => style == "office" || style == Apartment || style == OfficeTower;
+
+        /// <summary>
+        /// Versão simplificada (LOD1) de um modelo: volume com telhado, usado quando o prédio ocupa pouco
+        /// da tela. Reduz vértices e draw calls com a câmera afastada.
+        /// </summary>
+        public ModelMesh GetLod(string style, int level, Vector2 footprint, int variant)
+        {
+            var detailed = Get(style, level, footprint, variant);
+            string key = "LOD1|" + style + "|" + level + "|" + footprint.x.ToString("0.0") + "x" + footprint.y.ToString("0.0") + "|" + variant;
+            if (_cache.TryGetValue(key, out var cached)) return cached;
+
+            var b = detailed.Mesh.bounds;
+            _b.Clear();
+            var size = new Vector3(Mathf.Min(b.size.x, footprint.x) * 0.9f, b.max.y, Mathf.Min(b.size.z, footprint.y) * 0.9f);
+            _b.AddBox(MaterialSlot.Wall, new Vector3(b.center.x, 0f, b.center.z), size, topSlot: MaterialSlot.Roof);
+            var mesh = _b.Build("Model_" + key, out var slots);
+            var model = new ModelMesh { Mesh = mesh, Slots = slots };
+            _cache.Add(key, model);
+            return model;
+        }
+
         public void DestroyAll()
         {
             foreach (var m in _cache.Values) Object.Destroy(m.Mesh);

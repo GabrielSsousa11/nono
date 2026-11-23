@@ -78,6 +78,17 @@ namespace EmpireTycoon.Tests
                     TransferTaxRate = eco["TransferTaxRate"].Double,
                     PropertyTaxRatePerYear = eco["PropertyTaxRatePerYear"].Double,
                     DemolitionRefundRatio = eco["DemolitionRefundRatio"].Double,
+                    NeighborhoodRadiusCells = eco["NeighborhoodRadiusCells"].Int,
+                    DevelopmentBonus = eco["DevelopmentBonus"].Double,
+                    ParkBonus = eco["ParkBonus"].Double,
+                    MaxNeighborhoodBonus = eco["MaxNeighborhoodBonus"].Double,
+                },
+                Growth = new CityGrowthConfig
+                {
+                    Enabled = c["Growth"]["Enabled"].Int != 0,
+                    DailyDevelopmentChance = c["Growth"]["DailyDevelopmentChance"].Double,
+                    DevelopmentHours = c["Growth"]["DevelopmentHours"].Int,
+                    MinVacantFraction = c["Growth"]["MinVacantFraction"].Double,
                 },
             };
         }
@@ -140,6 +151,11 @@ namespace EmpireTycoon.Tests
             sb.AppendLine("=== RELATÓRIO DE BALANCEAMENTO — " + cfg.City.CityName + " ===");
             sb.AppendLine("Capital inicial: " + cfg.StartingCash);
             sb.AppendLine("Terrenos: " + s.City.Lots.Count + " (à venda: " + s.City.Lots.Count(l => l.IsForSale) + ")");
+            sb.AppendLine("População: " + s.Stats.Residents + "  Empregos: " + s.Stats.Jobs);
+            var later = new GameSession(cfg, LoadBuildings());
+            later.StepHours(24 * 360);
+            sb.AppendLine("Após 1 ano: à venda " + later.City.Lots.Count(l => l.IsForSale) + ", população " + later.Stats.Residents +
+                          ", empregos " + later.Stats.Jobs + ", valorização média " + later.City.Lots.Average(l => l.NeighborhoodBonus).ToString("P1"));
             foreach (District d in Enum.GetValues(typeof(District)))
             {
                 var lots = s.City.Lots.Where(l => l.District == d && l.IsForSale).ToList();

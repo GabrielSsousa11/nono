@@ -49,4 +49,12 @@ namespace EmpireTycoon.Simulation.Session
         public readonly long Day;
         public DayStarted(long day) { Day = day; }
     }
+
+    /// <summary>Um terreno começou ou terminou uma obra particular (crescimento da cidade).</summary>
+    public readonly struct LotDevelopmentChanged
+    {
+        public readonly int LotId;
+        public readonly bool Completed;
+        public LotDevelopmentChanged(int lotId, bool completed) { LotId = lotId; Completed = completed; }
+    }
 }

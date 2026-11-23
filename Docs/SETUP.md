@@ -27,6 +27,12 @@ Se a cena sumir/corromper: **Empire Tycoon → Recriar Cena Principal**.
 Abra `Assets/_Project/Scenes/Main.unity` → **Play**. Para testar toque no Editor, use o *Device Simulator*
 (Window → General → Device Simulator).
 
+## Saves
+
+Ficam em `Application.persistentDataPath/saves/` (`autosave.etsave`, `manual.etsave` e backups `.bak1/.bak2`).
+No Windows: `%USERPROFILE%/AppData/LocalLow/Empire Tycoon Studio/Empire Tycoon/saves`. Para começar do zero
+nos testes, apague essa pasta.
+
 ## Build
 
 Menu **Empire Tycoon → Build**:

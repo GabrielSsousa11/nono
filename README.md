@@ -3,9 +3,10 @@
 Jogo 3D de estratégia e gestão empresarial para Android (Unity 6 · C# · URP).
 O jogador começa com uma pequena empresa e um terreno em uma cidade e cresce até um conglomerado internacional.
 
-> **Status: Fase 1 — Fundação técnica + primeiro protótipo jogável.**
-> Abra o projeto, aperte Play: a cidade 3D aparece, você seleciona terrenos, compra, vende,
-> constrói, melhora e demole estabelecimentos, com custos e impostos reais.
+> **Status: Fases 1 e 2 concluídas (aguardando validação no Unity).**
+> Abra o projeto, aperte Play: tela inicial sobre a cidade 3D → novo jogo ou continuar. Selecione terrenos,
+> compre, venda, construa, melhore e demola estabelecimentos, com custos e impostos reais. A cidade cresce
+> sozinha, bairros valorizam, e o jogo salva automaticamente (com backups e recuperação).
 > Veja [Docs/ROADMAP.md](Docs/ROADMAP.md) para o que foi entregue e o que falta.
 
 ## Início rápido
@@ -26,7 +27,7 @@ Detalhes, problemas comuns e build Android: [Docs/SETUP.md](Docs/SETUP.md).
 | Zoom | pinça | roda do mouse · `+`/`-` |
 | Girar | girar 2 dedos | arrastar botão direito · `Q`/`E` |
 | Selecionar terreno | tocar | clicar |
-| Fechar/voltar | botão voltar do Android | `Esc` |
+| Fechar/voltar · menu de pausa | botão voltar do Android | `Esc` |
 
 ## Testes
 
@@ -41,7 +42,7 @@ A simulação econômica é C# puro (sem Unity) e é testada de duas formas, com
 
 ```
 Assets/_Project/
-  Scripts/Simulation/   Núcleo do jogo em C# puro (economia, cidade, construção). Sem dependência da Unity.
+  Scripts/Simulation/   Núcleo do jogo em C# puro (economia, cidade, construção, saves). Sem dependência da Unity.
   Scripts/Runtime/      Camada Unity: bootstrap, câmera, entrada, renderização 3D, interface.
   Scripts/Editor/       Configuração automática do projeto e scripts de build.
   Tests/EditMode/       Testes NUnit da simulação.

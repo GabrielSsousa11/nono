@@ -18,11 +18,16 @@ namespace EmpireTycoon.Runtime.UI
         private LotPanelView _lotPanel;
         private ConfirmDialog _dialog;
         private ToastView _toasts;
+        private MenuView _menu;
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
 
         public ToastView Toasts => _toasts;
 
-        public void Initialize(GameSession session, SelectionController selection, GameDatabase db, QualityPresetManager quality)
+        /// <summary>Algum menu modal (tela inicial, pausa, diálogo) está aberto e o mundo não deve receber entrada.</summary>
+        public bool IsModalOpen => _menu.IsTitleOpen || _menu.IsPauseOpen || _dialog.IsOpen;
+        public bool IsTitleOpen => _menu.IsTitleOpen;
+
+        public void Initialize(GameSession session, SelectionController selection, GameDatabase db, QualityPresetManager quality, IGameFlow flow)
         {
             _session = session;
 
@@ -45,10 +50,14 @@ namespace EmpireTycoon.Runtime.UI
             safe.gameObject.AddComponent<SafeAreaFitter>();
 
             _toasts = safe.gameObject.AddComponent<ToastView>();
-            _hud = new HudView(safe, session, quality);
-            _dialog = new ConfirmDialog(canvasGo.transform);
-            _lotPanel = new LotPanelView(safe, session, selection, db, _dialog, _toasts);
+            _hud = new HudView(safe, session, quality, () => _menu.OpenPause());
+            _lotPanel = new LotPanelView(safe, session, selection, db, null, _toasts);
             _toasts.Initialize(safe);
+            // Ordem dos irmãos = ordem de desenho: menus e diálogo ficam por cima de tudo.
+            _menu = new MenuView(canvasGo.transform, session, flow, quality, null, _toasts);
+            _dialog = new ConfirmDialog(canvasGo.transform);
+            _lotPanel.SetDialog(_dialog);
+            _menu.SetDialog(_dialog);
 
             _subscriptions.Add(session.Events.Subscribe<BuildingStateChanged>(e =>
             {
@@ -64,11 +73,16 @@ namespace EmpireTycoon.Runtime.UI
         public bool HandleBack()
         {
             if (_dialog.IsOpen) { _dialog.Close(); return true; }
+            if (_menu.IsTitleOpen) return true;
+            if (_menu.IsPauseOpen) { _menu.ClosePause(); return true; }
             if (_lotPanel.IsOpen) { _lotPanel.CloseOrBack(); return true; }
-            return false;
+            _menu.OpenPause();
+            return true;
         }
 
         public void TogglePause() => _hud.TogglePause();
+        public void ShowTitle() => _menu.ShowTitle();
+        public void HideMenus() { _menu.HideTitle(); _menu.ClosePause(); }
 
         private void Update()
         {

@@ -43,6 +43,15 @@ MonoBehaviour:
       TransferTaxRate: 0.03
       PropertyTaxRatePerYear: 0.012
       DemolitionRefundRatio: 0.25
+      NeighborhoodRadiusCells: 9
+      DevelopmentBonus: 0.12
+      ParkBonus: 0.04
+      MaxNeighborhoodBonus: 0.18
+    Growth:
+      Enabled: 1
+      DailyDevelopmentChance: 0.35
+      DevelopmentHours: 48
+      MinVacantFraction: 0.35
   buildings:
   - {fileID: 11400000, guid: 28f480d0879dd811f4d0a2cef2f4413e, type: 2}
   - {fileID: 11400000, guid: 9cdb4ca8cc9ccb1544aaccaed6fa5779, type: 2}

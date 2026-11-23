@@ -11,5 +11,7 @@ namespace EmpireTycoon.Simulation.Economy
         DemolitionRefund,
         Maintenance,
         PropertyTax,
+        /// <summary>Ajustes de compatibilidade (ex.: tipo de edifício removido do jogo, investimento devolvido).</summary>
+        Compensation,
     }
 }

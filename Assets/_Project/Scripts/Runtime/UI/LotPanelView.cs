@@ -22,7 +22,7 @@ namespace EmpireTycoon.Runtime.UI
         private readonly GameSession _session;
         private readonly SelectionController _selection;
         private readonly GameDatabase _db;
-        private readonly ConfirmDialog _dialog;
+        private ConfirmDialog _dialog;
         private readonly ToastView _toasts;
 
         private readonly GameObject _root;
@@ -33,10 +33,13 @@ namespace EmpireTycoon.Runtime.UI
 
         private Mode _mode = Mode.Details;
         private bool _dirty = true;
+        private bool _resetScroll = true;
         private Image _progressFill;
         private Text _progressLabel;
 
         public bool IsOpen => _root.activeSelf;
+
+        public void SetDialog(ConfirmDialog dialog) => _dialog = dialog;
 
         public LotPanelView(RectTransform parent, GameSession session, SelectionController selection, GameDatabase db, ConfirmDialog dialog, ToastView toasts)
         {
@@ -82,19 +85,21 @@ namespace EmpireTycoon.Runtime.UI
             body.offsetMin = new Vector2(28, 24);
             body.offsetMax = new Vector2(-28, -136);
 
-            _selection.SelectionChanged += _ => { _mode = Mode.Details; _dirty = true; };
+            _selection.SelectionChanged += _ => { _mode = Mode.Details; _dirty = true; _resetScroll = true; };
             session.Events.Subscribe<LotOwnershipChanged>(_ => _dirty = true);
             session.Events.Subscribe<BuildingPlaced>(_ => _dirty = true);
             session.Events.Subscribe<BuildingRemoved>(_ => _dirty = true);
             session.Events.Subscribe<BuildingStateChanged>(_ => _dirty = true);
             session.Events.Subscribe<CashChanged>(e => { if (e.CompanyId == session.Player.Id) _dirty = true; });
+            session.Events.Subscribe<LotDevelopmentChanged>(e => { if (e.LotId == _selection.SelectedLotId) _dirty = true; });
+            session.Events.Subscribe<DayStarted>(_ => _dirty = true); // preços mudam na virada do dia
 
             _root.SetActive(false);
         }
 
         public void CloseOrBack()
         {
-            if (_mode == Mode.BuildMenu) { _mode = Mode.Details; _dirty = true; }
+            if (_mode == Mode.BuildMenu) { _mode = Mode.Details; _dirty = true; _resetScroll = true; }
             else _selection.Select(-1);
         }
 
@@ -114,7 +119,8 @@ namespace EmpireTycoon.Runtime.UI
                 float scrollPos = _scroll.verticalNormalizedPosition;
                 Rebuild(lot);
                 Canvas.ForceUpdateCanvases();
-                _scroll.verticalNormalizedPosition = _mode == Mode.BuildMenu ? scrollPos : 1f;
+                _scroll.verticalNormalizedPosition = _resetScroll ? 1f : scrollPos;
+                _resetScroll = false;
             }
             UpdateProgress(lot);
         }
@@ -145,7 +151,12 @@ namespace EmpireTycoon.Runtime.UI
             var market = _session.LandMarket;
             float cs = _db.cellSize;
             Info("Área", (lot.Rect.Width * cs).ToString("0") + " × " + (lot.Rect.Height * cs).ToString("0") + " m  (" + (lot.Rect.Area * cs * cs).ToString("0") + " m²)");
-            if (lot.District != District.Park) Info("Valor de mercado", UIStrings.FormatMoney(market.MarketValue(lot)));
+            if (lot.District != District.Park)
+            {
+                Info("Valor de mercado", UIStrings.FormatMoney(market.MarketValue(lot)));
+                if (lot.NeighborhoodBonus > 0.0005)
+                    Info("Valorização do bairro", "+" + (lot.NeighborhoodBonus * 100).ToString("0.0") + "%  (vizinhança ocupada e praças próximas)");
+            }
             Info("Proprietário", OwnerName(lot));
 
             if (lot.OwnerId == me)
@@ -168,6 +179,11 @@ namespace EmpireTycoon.Runtime.UI
             else if (lot.District == District.Park)
             {
                 Note("Área pública da prefeitura. Praças valorizam a vizinhança e não podem ser compradas.");
+            }
+            else if (lot.IsUnderDevelopment)
+            {
+                Info("Obra particular", UIStrings.AmbientName(lot.Ambient) + " — conclui em " + UIStrings.Hours(lot.DevelopmentHoursLeft));
+                Note("A cidade cresce sozinha: moradores e empresas locais ocupam terrenos vagos, valorizando o bairro.");
             }
             else if (lot.IsAmbient)
             {
@@ -234,6 +250,7 @@ namespace EmpireTycoon.Runtime.UI
             {
                 _mode = Mode.BuildMenu;
                 _dirty = true;
+                _resetScroll = true;
             });
             build.SetInteractable(true);
 
@@ -257,6 +274,7 @@ namespace EmpireTycoon.Runtime.UI
             {
                 _mode = Mode.Details;
                 _dirty = true;
+                _resetScroll = true;
             });
             UIFactory.SetLayout(back.Background, preferredHeight: 70f);
 

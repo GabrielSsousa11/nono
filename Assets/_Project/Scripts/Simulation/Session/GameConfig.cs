@@ -21,6 +21,7 @@ namespace EmpireTycoon.Simulation.Session
 
         public CityLayoutConfig City = new CityLayoutConfig();
         public EconomyConfig Economy = new EconomyConfig();
+        public CityGrowthConfig Growth = new CityGrowthConfig();
 
         public Money StartingCash => Money.FromUnits(StartingCashUnits);
 
@@ -30,9 +31,10 @@ namespace EmpireTycoon.Simulation.Session
             if (SecondsPerTick <= 0) throw new InvalidOperationException("SecondsPerTick deve ser positivo.");
             if (MaxTicksPerFrame <= 0) throw new InvalidOperationException("MaxTicksPerFrame deve ser positivo.");
             if (StartHour < 0 || StartHour >= SimulationClock.HoursPerDay) throw new InvalidOperationException("StartHour inválida.");
-            if (City == null || Economy == null) throw new InvalidOperationException("Configuração incompleta.");
+            if (City == null || Economy == null || Growth == null) throw new InvalidOperationException("Configuração incompleta.");
             City.Validate();
             Economy.Validate();
+            Growth.Validate();
         }
     }
 }

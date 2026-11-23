@@ -99,6 +99,20 @@ namespace EmpireTycoon.Runtime.UI
             return h == 0 ? d + (d == 1 ? " dia" : " dias") : d + "d " + h + "h";
         }
 
+        /// <summary>Inteiro com separador de milhar brasileiro, independente da cultura do aparelho.</summary>
+        public static string Number(long n)
+        {
+            string digits = System.Math.Abs(n).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var sb = new System.Text.StringBuilder();
+            int first = digits.Length % 3;
+            for (int i = 0; i < digits.Length; i++)
+            {
+                if (i > 0 && (i - first) % 3 == 0) sb.Append('.');
+                sb.Append(digits[i]);
+            }
+            return (n < 0 ? "-" : "") + sb;
+        }
+
         public static string FormatMoney(Money m) => Money.Format(m);
         public static string FormatMoneyShort(Money m) => Money.FormatCompact(m);
     }

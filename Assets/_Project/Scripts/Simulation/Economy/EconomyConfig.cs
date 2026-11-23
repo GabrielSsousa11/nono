@@ -28,6 +28,18 @@ namespace EmpireTycoon.Simulation.Economy
         /// <summary>Fração do investimento em construção devolvida ao demolir.</summary>
         public double DemolitionRefundRatio = 0.25;
 
+        /// <summary>Raio de vizinhança, em células, usado na valorização de terrenos.</summary>
+        public int NeighborhoodRadiusCells = 9;
+
+        /// <summary>Valorização máxima por bairro totalmente ocupado (0,12 = +12%).</summary>
+        public double DevelopmentBonus = 0.12;
+
+        /// <summary>Valorização por praça próxima (até 2 praças contam).</summary>
+        public double ParkBonus = 0.04;
+
+        /// <summary>Teto da valorização de bairro. Validado para não permitir lucro com compra e revenda.</summary>
+        public double MaxNeighborhoodBonus = 0.18;
+
         public void Validate()
         {
             int districts = Enum.GetValues(typeof(District)).Length;
@@ -40,6 +52,11 @@ namespace EmpireTycoon.Simulation.Economy
             CheckRatio(TransferTaxRate, nameof(TransferTaxRate), maxExclusive: 1.0);
             CheckRatio(PropertyTaxRatePerYear, nameof(PropertyTaxRatePerYear), maxExclusive: 1.0);
             if (CentralityBonus < 0 || CentralityBonus > 5) throw new InvalidOperationException("CentralityBonus fora do intervalo [0, 5].");
+            if (NeighborhoodRadiusCells < 1) throw new InvalidOperationException("NeighborhoodRadiusCells deve ser >= 1.");
+            if (DevelopmentBonus < 0 || ParkBonus < 0 || MaxNeighborhoodBonus < 0) throw new InvalidOperationException("Bônus de bairro não podem ser negativos.");
+            // Anti-exploit: mesmo com a valorização máxima, vender rende menos do que custou comprar.
+            if (LandSaleRatio * (1.0 + MaxNeighborhoodBonus) >= 1.0 + TransferTaxRate)
+                throw new InvalidOperationException("LandSaleRatio × (1 + MaxNeighborhoodBonus) deve ser menor que 1 + TransferTaxRate (evita lucro com revenda).");
         }
 
         private static void CheckRatio(double value, string name, double maxExclusive)

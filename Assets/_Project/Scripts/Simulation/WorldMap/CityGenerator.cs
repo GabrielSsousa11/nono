@@ -75,25 +75,9 @@ namespace EmpireTycoon.Simulation.WorldMap
             var lot = map.AddLot(rect, district, dist01);
             if (!rng.Chance(cfg.AmbientDensity[(int)district])) return;
 
-            switch (district)
-            {
-                case District.Residential:
-                    lot.Ambient = rng.Chance(0.75) ? AmbientStructure.House : AmbientStructure.Apartment;
-                    lot.AmbientFloors = lot.Ambient == AmbientStructure.House ? rng.Range(1, 3) : rng.Range(3, 6);
-                    break;
-                case District.Commercial:
-                    lot.Ambient = rng.Chance(0.6) ? AmbientStructure.Shop : AmbientStructure.Apartment;
-                    lot.AmbientFloors = lot.Ambient == AmbientStructure.Shop ? rng.Range(1, 3) : rng.Range(4, 8);
-                    break;
-                case District.Downtown:
-                    lot.Ambient = AmbientStructure.OfficeTower;
-                    lot.AmbientFloors = rng.Range(8, 20);
-                    break;
-                case District.Industrial:
-                    lot.Ambient = AmbientStructure.Warehouse;
-                    lot.AmbientFloors = 1;
-                    break;
-            }
+            AmbientRules.Pick(district, rng, out var type, out int floors);
+            lot.Ambient = type;
+            lot.AmbientFloors = floors;
         }
     }
 }

@@ -83,6 +83,17 @@ namespace EmpireTycoon.Simulation.Core
         /// <summary>Marca um tick como processado.</summary>
         public void CommitTick() => TotalTicks++;
 
-        public string FormatDate() => "Dia " + DayOfMonth.ToString("00") + "/" + Month.ToString("00") + " · Ano " + Year + " · " + Hour.ToString("00") + ":00";
+        public string FormatDate() => FormatDate(TotalTicks, includeHour: true);
+
+        /// <summary>Data de jogo de um instante qualquer (ex.: resumo de um save).</summary>
+        public static string FormatDate(long totalTicks, bool includeHour)
+        {
+            long days = totalTicks / HoursPerDay;
+            int day = (int)(days % DaysPerMonth) + 1;
+            int month = (int)(days / DaysPerMonth % MonthsPerYear) + 1;
+            int year = (int)(days / (DaysPerMonth * MonthsPerYear)) + 1;
+            string date = "Dia " + day.ToString("00") + "/" + month.ToString("00") + " · Ano " + year;
+            return includeHour ? date + " · " + ((int)(totalTicks % HoursPerDay)).ToString("00") + ":00" : date;
+        }
     }
 }

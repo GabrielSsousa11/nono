@@ -237,9 +237,10 @@ namespace EmpireTycoon.Tests
             s.BuyLot(P(s), ind.Id);
             s.Construct(P(s), ind.Id, TestData.Factory); // 72h de obra
             var before = s.Player.Cash;
-            s.StepHours(24);
+            // Valores de terreno só mudam na virada do dia, depois das cobranças: calcula antes.
             var taxOnly = Money.Zero;
             foreach (var l in s.City.Lots) if (l.OwnerId == P(s)) taxOnly += s.LandMarket.DailyPropertyTax(l);
+            s.StepHours(24);
             Assert.AreEqual(before - taxOnly, s.Player.Cash);
         }
 
