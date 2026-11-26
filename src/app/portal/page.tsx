@@ -6,6 +6,7 @@ import { NoPatientLinked, PortalHeading, PortalLoading } from "@/components/port
 import { Badge, Empty } from "@/components/ui/empty";
 import { appointmentStatusLabel } from "@/features/agenda/labels";
 import { markNotificationsRead } from "@/features/portal/portal-actions";
+import { PushToggle } from "@/features/automations/push-toggle";
 import { requirePortal } from "@/lib/auth/guards";
 import { fmtDateLong, fmtDateTime, fmtTime } from "@/lib/datetime";
 
@@ -62,6 +63,7 @@ async function Home() {
       <section id="avisos" aria-labelledby="avisos-title" className="mt-14 flex flex-col gap-4 border-t border-onyx/10 pt-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="avisos-title" className="font-display text-2xl">Avisos</h2>
+          <PushToggle />
           {unread && <form action={markNotificationsRead}><button type="submit" className="text-sm text-olive underline underline-offset-4">Marcar todos como lidos</button></form>}
         </div>
         {notifications.length === 0 ? <Empty>Nenhum aviso por enquanto.</Empty> : (

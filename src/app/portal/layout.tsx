@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { PortalNav } from "@/components/portal/portal-nav";
+import { ConciergeWidget } from "@/features/concierge/concierge-widget";
 import { Monogram } from "@/components/ui/monogram";
 import { signOut } from "@/features/auth/actions";
 import { switchPatient } from "@/features/portal/portal-actions";
@@ -68,6 +69,7 @@ export default function PortalLayout({ children }: LayoutProps<"/portal">) {
       <main id="conteudo" className="mx-auto w-full max-w-[72rem] flex-1 px-5 pt-10 pb-24 sm:px-8">
         {children}
       </main>
+      <ConciergeWidget />
     </div>
   );
 }

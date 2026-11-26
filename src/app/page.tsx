@@ -13,6 +13,7 @@ import { SiteHeader, type NavItem } from "@/components/home/site-header";
 import { Space } from "@/components/home/space";
 import { SyntheticBanner } from "@/components/home/synthetic-banner";
 import { Treatments } from "@/components/home/treatments";
+import { ConciergeWidget } from "@/features/concierge/concierge-widget";
 import { getSiteContent, type SiteContent } from "@/lib/content";
 import { siteUrl } from "@/lib/env";
 
@@ -90,6 +91,7 @@ export default function HomePage() {
         <BookingSection content={content} />
       </main>
       <SiteFooter content={content} nav={nav} />
+      <ConciergeWidget />
       {synthetic && <SyntheticBanner />}
       {!synthetic && (
         <script
