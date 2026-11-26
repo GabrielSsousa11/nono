@@ -43,7 +43,7 @@ export async function sendMagicLink(_prev: MagicLinkState, formData: FormData): 
 
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data,
-    options: { shouldCreateUser: false, emailRedirectTo: `${siteUrl()}/auth/confirm?next=/portal` },
+    options: { shouldCreateUser: false, emailRedirectTo: `${siteUrl()}/auth/confirm?next=/continuar` },
   });
 
   // Erros de "usuário não encontrado" são tratados como envio (anti-enumeração).

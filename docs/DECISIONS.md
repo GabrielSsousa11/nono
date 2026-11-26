@@ -21,11 +21,14 @@ vive no banco. Alternativa auto-hospedada documentada em `HOSTING_AND_COSTS.md`.
 Dados factuais nunca são inventados. `official.ts` contém só o confirmado; `dev-fixtures.ts` é sintético e o build de
 produção falha se for ativado. Seções sem dados não aparecem em produção.
 
-## ADR-005 — CSP sem nonce nas páginas públicas
+## ADR-005 — CSP sem nonce (revisado na Fase 3)
 
-Nonce exige renderização dinâmica de todas as páginas (pior LCP/custo). Páginas públicas não têm dados pessoais;
-CSP restringe origens, `frame-ancestors 'none'`, `object-src 'none'`. **Fase 3:** áreas autenticadas passam a usar
-CSP com nonce via `proxy.ts`.
+A documentação do Next.js 16 informa que nonce exige renderização dinâmica de todas as páginas e é **incompatível com
+Partial Prerendering**, que o Cache Components ativa globalmente. Manter o site público estático (LCP) e as áreas
+privadas com shell pré-renderizado inviabiliza nonce. Decisão: CSP sem nonce em todo o app, com controles
+compensatórios — nenhum script de terceiros, `connect-src` restrito ao próprio domínio e ao Supabase,
+`frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, escape automático do React,
+único `dangerouslySetInnerHTML` (JSON-LD) com `<` escapado. Reavaliar com SRI/hashes quando estáveis.
 
 ## ADR-006 — Limite de taxa autoritativo no banco
 
@@ -51,3 +54,25 @@ contas. Equipe usará MFA TOTP adicional (Fase 3).
 ## ADR-010 — Fontes auto-hospedadas
 
 `next/font/google` baixa as fontes no build; nenhuma requisição ao Google em tempo de execução (privacidade/LGPD).
+
+## ADR-011 — Chave de serviço restrita à API administrativa de Auth
+
+Convidar membros da equipe e redefinir MFA de outra pessoa só é possível pela API administrativa do Supabase Auth, que
+exige a service role key. Alternativa (Edge Function) adicionaria outro runtime para o mesmo risco. Decisão:
+`src/lib/supabase/admin.ts` (server-only) expõe **apenas** `auth.admin`; cada Server Action verifica antes, com a
+sessão de quem pediu, `gate === "ok"` (MFA) e a permissão `users.manage`; as mudanças de papel em si são feitas pelas
+RPCs com a sessão da pessoa (RLS/RPC continuam valendo) e cada ação é auditada (`record_admin_event`). Sem a chave,
+as ações ficam indisponíveis e a interface informa.
+
+## ADR-012 — Permissões como dados e MFA no banco
+
+Papéis recebem permissões (`role_permissions`); políticas consultam `private.has_permission()`, que só considera papéis
+de equipe quando o JWT tem `aal = aal2`. Assim, uma sessão roubada sem o segundo fator não lê nada clínico ou
+cadastral, mesmo que a interface tenha um bug. Pacientes e responsáveis não usam permissões genéricas: acesso por
+vínculo (`patients.profile_id`, `patient_guardians` ativo).
+
+## ADR-013 — Consentimentos append-only
+
+Cada concessão é uma linha; revogar marca `revoked_at`/`revoked_by`. Gatilho impede reescrever ou apagar. Titulares e
+responsáveis alteram pelo portal apenas consentimentos opcionais; tratamento e uso de imagem em divulgação exigem
+registro presencial pela equipe (`record_consent`).

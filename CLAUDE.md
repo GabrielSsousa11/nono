@@ -19,8 +19,11 @@ Interface 100% em **português brasileiro**. Leia `docs/ARCHITECTURE.md` e `docs
 4. **Serviço pago só com autorização explícita** da pessoa responsável. Registre em `docs/HOSTING_AND_COSTS.md`.
 5. **Dados de saúde são sensíveis (LGPD art. 11)**: nunca em logs, analytics, cache público, service worker ou serviços
    de IA não autorizados. Logs registram apenas códigos de erro e IDs.
-6. **RLS em toda tabela** do schema `public`. Escrita pública somente via função `SECURITY DEFINER` validada. Nunca usar
-   a service role key no app web. Recepção e financeiro não acessam o prontuário clínico.
+6. **RLS em toda tabela** do schema `public`. Escrita pública somente via função `SECURITY DEFINER` validada.
+   Políticas usam `private.has_permission('<recurso>.<ação>')`; papéis de equipe só valem com sessão `aal2` (MFA).
+   Recepção e financeiro não recebem permissões `clinical.*`. `TRUNCATE` nunca é concedido à API; tabelas com guarda
+   legal não aceitam `DELETE`. A service role key só pode aparecer em `src/lib/supabase/admin.ts`, para a API
+   administrativa de Auth, depois de verificar a permissão de quem pediu (ADR-011) — nunca para ler/gravar tabelas.
 7. **Não declarar concluído só porque a interface existe**: interface + backend + persistência + permissões + estados
    de carregamento/erro + mobile + testes.
 
@@ -28,7 +31,11 @@ Interface 100% em **português brasileiro**. Leia `docs/ARCHITECTURE.md` e `docs
 
 - Next.js 16 (App Router, `cacheComponents`, `proxy.ts` em vez de middleware), React 19, TypeScript strict, Tailwind 4.
   **Consulte `node_modules/next/dist/docs/` antes de usar APIs do Next** — elas mudaram em relação ao treinamento.
-- Leitura de cookies/sessão somente dentro de `<Suspense>` (Cache Components). Páginas públicas devem permanecer estáticas.
+- Leitura de cookies/sessão somente via `getSessionContext()` (`src/lib/auth/session.ts`), dentro de `<Suspense>`.
+  Páginas públicas devem permanecer estáticas. Toda página protegida confere `gate === "ok"` mesmo já estando sob o
+  layout que redireciona.
+- Redirecionamentos em route handlers usam `siteUrl()`, nunca `request.url` (host interno do servidor).
+- Arquivos `"use server"` exportam apenas funções assíncronas; constantes e schemas ficam em módulos irmãos.
 - Regras de negócio puras e testáveis separadas das Server Actions (ex.: `features/booking/submit.ts` ×
   `features/booking/actions.ts`).
 - Validação com Zod no cliente **e** no servidor; o banco também valida com `CHECK`.
@@ -55,7 +62,7 @@ npm run dev             # desenvolvimento (conteúdo oficial)
 npm run dev:fixtures    # desenvolvimento com dados sintéticos (todas as seções visíveis)
 npm run verify          # lint + typecheck + unit + banco + build
 npm run test:e2e        # Playwright contra build de produção + mock do Supabase
-npm run test:db         # aplica migrations num Postgres descartável e roda supabase/tests
+npm run test:db         # aplica migrations num Postgres descartável e roda supabase/tests (matriz de acesso)
 npm run content:check   # lista dados pendentes para publicação (sai 1 se houver bloqueantes)
 ```
 

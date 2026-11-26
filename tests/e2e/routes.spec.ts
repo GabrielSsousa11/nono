@@ -64,3 +64,24 @@ test("página inexistente retorna 404 com caminho de volta", async ({ page }) =>
   expect(res?.status()).toBe(404);
   await expect(page.getByRole("link", { name: "Ir para a página inicial" })).toBeVisible();
 });
+
+test.describe("áreas protegidas da Fase 3", () => {
+  for (const path of [
+    "/studio",
+    "/studio/equipe",
+    "/studio/pedidos",
+    "/studio/mfa/configurar",
+    "/portal/privacidade",
+    "/continuar",
+  ]) {
+    test(`${path} exige login`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page).toHaveURL(/\/entrar$/);
+    });
+  }
+
+  test("áreas autenticadas não são armazenadas em cache", async ({ request }) => {
+    const res = await request.get("/studio", { maxRedirects: 0 });
+    expect(res.headers()["cache-control"]).toContain("no-store");
+  });
+});

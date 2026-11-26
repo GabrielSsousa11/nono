@@ -18,11 +18,23 @@
 - Sem analytics, sem fontes/scripts de terceiros em tempo de execução.
 - Consentimento versionado (`consent_version`) gravado em cada pedido.
 
+## Implementado (Fase 3)
+
+- Seis perfis de acesso com permissões em tabela; papéis de equipe exigem MFA (`aal2`) no próprio banco.
+- Recepção e financeiro sem permissões clínicas; financeiro sem pedidos de agendamento.
+- Paciente acessa só o próprio cadastro; responsável só dependentes com vínculo ativo e não expirado; acesso clínico
+  do responsável é opcional (`can_view_clinical`, padrão falso).
+- Vínculos e papéis só por RPC auditada; revogação de responsável exige motivo e remove o papel sem outros vínculos.
+- Consentimentos versionados, append-only, com autor e, quando for o caso, o responsável que agiu.
+- `TRUNCATE` revogado da API (ignora RLS); `DELETE` revogado em pacientes, consentimentos, responsáveis, auditoria,
+  pedidos e profissionais.
+- Auditoria automática registra quem alterou quais colunas, sem copiar valores pessoais.
+- Rotas autenticadas com `Cache-Control: private, no-store`, inclusive nos redirecionamentos.
+
 ## Próximas fases
 
-- Papéis e RLS por função; recepção/financeiro sem acesso ao prontuário (`clinical_records`, `tooth_records`,
-  `clinical_photos` só dentista/admin com `aal2`).
-- MFA TOTP obrigatório para equipe; sessões curtas para Studio.
+- Tabelas clínicas (`clinical_records`, `tooth_records`, `clinical_photos`…) protegidas por `clinical.*`.
+- Duração de sessão menor para a equipe (configurar "time-box" de sessão no Supabase Auth).
 - Storage privado com URLs assinadas de curta duração; fotos clínicas nunca públicas.
 - Auditoria de leitura de dados clínicos (função de acesso que registra em `audit_logs`).
 - Backups + **teste de restauração** documentado trimestralmente.
@@ -37,3 +49,6 @@
   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/portal`.
 - Auth → URL do site e redirect permitido apenas `https://<domínio>/auth/confirm`.
 - SMTP próprio; região sa-east-1; habilitar MFA TOTP; habilitar pg_cron.
+- Template de convite (`Invite user`) apontando para `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/continuar`.
+- `SUPABASE_SERVICE_ROLE_KEY` apenas como segredo de servidor na hospedagem.
+- Primeira administradora: convidar pelo painel do Supabase e executar `select private.bootstrap_admin('email');`.

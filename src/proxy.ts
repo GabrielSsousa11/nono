@@ -27,11 +27,14 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && request.nextUrl.pathname.startsWith("/portal")) {
+  const protectedArea = ["/portal", "/studio", "/continuar"].some((p) => request.nextUrl.pathname.startsWith(p));
+  if (!user && protectedArea) {
     const login = request.nextUrl.clone();
     login.pathname = "/entrar";
     login.search = "";
-    return NextResponse.redirect(login);
+    const redirect = NextResponse.redirect(login);
+    redirect.headers.set("Cache-Control", "private, no-store");
+    return redirect;
   }
 
   response.headers.set("Cache-Control", "private, no-store");
@@ -39,5 +42,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/portal/:path*", "/auth/:path*"],
+  matcher: ["/portal/:path*", "/studio/:path*", "/continuar", "/auth/:path*"],
 };

@@ -1,12 +1,21 @@
 -- Testes da migration de fundação. Executar com scripts/db/test-migrations.sh
 \set ON_ERROR_STOP on
 create or replace function pg_temp.expect_error(sql text, fragment text) returns void language plpgsql as $$
+declare
+  failed boolean := false;
+  msg text;
 begin
-  execute sql;
-  raise exception 'ESPERADO ERRO contendo "%" em: %', fragment, sql;
-exception when others then
-  if sqlerrm not like '%' || fragment || '%' then
-    raise exception 'Erro inesperado: % (esperado "%")', sqlerrm, fragment;
+  begin
+    execute sql;
+  exception when others then
+    failed := true;
+    msg := sqlerrm;
+  end;
+  if not failed then
+    raise exception 'ESPERADO ERRO (%), mas o comando foi aceito: %', fragment, sql;
+  end if;
+  if msg not like '%' || fragment || '%' then
+    raise exception 'Erro inesperado: % (esperado "%") em: %', msg, fragment, sql;
   end if;
 end $$;
 

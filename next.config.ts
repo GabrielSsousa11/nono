@@ -76,7 +76,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/(portal|entrar|auth)/:path*",
+        source: "/(portal|entrar|auth|studio|continuar)/:path*",
         headers: [{ key: "Cache-Control", value: "private, no-store" }],
       },
     ];

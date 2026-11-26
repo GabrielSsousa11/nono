@@ -3,7 +3,9 @@ import { siteUrl } from "@/lib/env";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: ["/portal", "/entrar", "/auth", "/offline"] }],
+    rules: [
+      { userAgent: "*", allow: "/", disallow: ["/portal", "/studio", "/entrar", "/auth", "/continuar", "/offline"] },
+    ],
     sitemap: `${siteUrl()}/sitemap.xml`,
   };
 }

@@ -2,7 +2,7 @@
 
 Plataforma digital da clínica: site institucional, portal do paciente e (nas próximas fases) o painel CG Studio.
 
-**Estado:** Fase 1 concluída; Fase 2 com código pronto, aguardando conteúdo oficial. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+**Estado:** Fases 1 e 3 concluídas (Fase 3 aguardando validação em um projeto Supabase real); Fase 2 com código pronto, aguardando conteúdo oficial. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Início rápido
 

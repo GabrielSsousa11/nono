@@ -1,11 +1,12 @@
-import { LogOut } from "lucide-react";
+import { ArrowRight, LogOut } from "lucide-react";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { PageShell } from "@/components/ui/page-shell";
 import { signOut } from "@/features/auth/actions";
 import { platformModules, statusLabel } from "@/lib/modules";
-import { createSessionClient } from "@/lib/supabase/server";
+import { getSessionContext } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Portal",
@@ -13,11 +14,7 @@ export const metadata: Metadata = {
 };
 
 async function PortalContent() {
-  const supabase = await createSessionClient();
-  if (!supabase) redirect("/entrar");
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionContext();
   if (!user) redirect("/entrar");
 
   return (
@@ -27,6 +24,21 @@ async function PortalContent() {
         <h1 className="font-display text-[clamp(2.5rem,5vw,4rem)] leading-none">Seu portal</h1>
         <p className="text-mist">Conectado como {user.email}</p>
       </div>
+      <Link
+        href="/portal/privacidade"
+        className="group flex max-w-xl items-center justify-between gap-6 border-y border-onyx/10 py-6"
+      >
+        <span>
+          <span className="font-display block text-2xl">Meus dados e privacidade</span>
+          <span className="text-sm text-mist">
+            Cadastro, autorizações de contato e fotografias, responsáveis e direitos.
+          </span>
+        </span>
+        <ArrowRight
+          aria-hidden
+          className="size-5 shrink-0 text-gold-ink transition-transform group-hover:translate-x-1"
+        />
+      </Link>
       <section aria-labelledby="modulos-title">
         <h2 id="modulos-title" className="mb-6 text-lg font-semibold">
           Módulos

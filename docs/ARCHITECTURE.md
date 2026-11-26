@@ -60,6 +60,23 @@ Fase 2 entrega o **pedido de agendamento**: formulário → Server Action → re
 O limitador em memória da Server Action é só uma camada extra. A agenda real (disponibilidade, conflitos com
 `EXCLUDE USING gist`, lista de espera) chega na Fase 4.
 
+## Identidade e autorização (Fase 3)
+
+```
+auth.users ──1:1── profiles ──< user_roles >── roles ──< role_permissions >── permissions
+                       │
+                       ├── patients.profile_id (paciente com acesso ao portal)
+                       └── patient_guardians.guardian_profile_id (responsável com vínculo ativo)
+```
+
+- `private.has_permission(p)` — verdadeiro se algum papel da pessoa concede `p` **e**, para papéis de equipe, a sessão
+  é `aal2`. Todas as políticas de equipe usam essa função.
+- Paciente/responsável: acesso por vínculo (`private.is_patient_self`, `private.is_guardian_of`), nunca por permissão.
+- Escritas sensíveis só por RPC: `grant_role`, `revoke_role`, `link_patient_account`, `link_guardian_account`,
+  `revoke_guardian`, `record_consent`, `set_my_consent`, `record_admin_event`. `my_access()` alimenta a interface.
+- Aplicação: `getSessionContext()` (usuário, acesso, AAL, fatores) → `resolveStudioGate()` decide
+  `login | forbidden | enroll_mfa | verify_mfa | ok`. O layout do Studio redireciona; cada página reconfere.
+
 ## Autenticação
 
 Link mágico por e-mail (`signInWithOtp`, `shouldCreateUser: false` — contas criadas pela clínica). Resposta

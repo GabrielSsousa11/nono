@@ -38,13 +38,29 @@ persistência, permissões, estados de carregamento/erro, mobile e testes estão
 | Rodapé, política de privacidade preliminar, 404, offline   | ✅     | Política exige revisão jurídica.                                    |
 | Área do paciente: login por link mágico + portal protegido | 🟡     | Fluxo funcional; módulos do portal nas fases 5–9.                   |
 
-## Fase 3 — Autenticação, banco e permissões ⬜
+## Fase 3 — Autenticação, banco e permissões ✅ (validação em Supabase real pendente)
 
-- [ ] Migrations: `profiles`, `roles`, `permissions`, `patients`, `professionals`, `patient_guardians`, `consents`, `audit` por trigger.
-- [ ] Funções `private.has_role()`/`private.is_staff()` + políticas RLS por papel (admin, dentista, recepção, financeiro, paciente, responsável).
-- [ ] MFA TOTP obrigatório para equipe (`aal2` em RLS e no proxy); tela de cadastro de fator.
-- [ ] CSP com nonce nas áreas autenticadas (ADR-005).
-- [ ] Testes SQL de cada política (matriz papel × tabela × operação).
+| Tarefa                                                                                                                                        | Status | Verificação                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| Migration: `roles`, `permissions`, `role_permissions`, `profiles`, `user_roles`, `professionals`, `patients`, `patient_guardians`, `consents` | ✅     | `npm run test:db`                                                                          |
+| Permissões como dados + `private.has_permission()` exigindo `aal2` para papéis de equipe                                                      | ✅     | matriz `identity_access.test.sql`                                                          |
+| Recepção/financeiro sem `clinical.*`; financeiro sem pedidos; paciente vê só o próprio cadastro; responsável só com vínculo ativo             | ✅     | matriz SQL                                                                                 |
+| Vínculo de conta do paciente/responsável só via RPC; revogação de responsável com motivo e remoção do papel                                   | ✅     | matriz SQL                                                                                 |
+| Consentimentos append-only; titular gerencia os opcionais; presenciais pela equipe                                                            | ✅     | matriz SQL + E2E portal                                                                    |
+| Auditoria automática (colunas alteradas, sem valores) + eventos administrativos                                                               | ✅     | matriz SQL                                                                                 |
+| `TRUNCATE` revogado da API; `DELETE` revogado em tabelas com guarda legal                                                                     | ✅     | matriz SQL                                                                                 |
+| MFA TOTP obrigatório no CG Studio (cadastro com QR Code, verificação, redefinição pelo admin)                                                 | 🟡     | Portão testado (unit + E2E com sessão sintética); fluxo TOTP real requer projeto Supabase. |
+| CG Studio: visão geral, pedidos de agendamento, equipe e acessos (convite, funções)                                                           | 🟡     | E2E com mock; convites exigem `SUPABASE_SERVICE_ROLE_KEY` e projeto real.                  |
+| Portal: "Meus dados e privacidade" (cadastro, autorizações, responsáveis, direitos)                                                           | ✅     | E2E com mock                                                                               |
+| Redirecionamento pós-login por perfil (`/continuar`)                                                                                          | ✅     | E2E                                                                                        |
+| CSP com nonce                                                                                                                                 | ➖     | Inviável com Cache Components/PPR — ADR-005 revisado.                                      |
+
+**Para validar em ambiente real:** criar projeto Supabase (sa-east-1), aplicar migrations, configurar Auth
+(`docs/SECURITY_LGPD.md`), convidar a primeira administradora pelo painel do Supabase e executar
+`select private.bootstrap_admin('email');` no SQL Editor.
+
+**UI que fica para a Fase 4:** cadastro/edição de pacientes, convite de pacientes e responsáveis ao portal, registro
+presencial de consentimentos e cadastro de profissionais (o banco e as RPCs já existem e estão testados).
 
 ## Fase 4 — Agendamento e CG Studio ⬜
 
