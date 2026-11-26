@@ -8,7 +8,11 @@ import { getSessionContext } from "@/lib/auth/session";
 
 export async function logHabit(_p: ActionState, fd: FormData): Promise<ActionState> {
   const v = z
-    .object({ patientId: z.uuid(), kind: z.enum(["brushing", "flossing"]), guided: z.coerce.number().int().min(0).max(600).optional() })
+    .object({
+      patientId: z.uuid(),
+      kind: z.enum(["brushing", "flossing"]),
+      guided: z.coerce.number().int().min(0).max(600).optional(),
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
   const { supabase } = await getSessionContext();
@@ -25,7 +29,9 @@ export async function logHabit(_p: ActionState, fd: FormData): Promise<ActionSta
 }
 
 export async function completeMission(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const v = z.object({ patientId: z.uuid(), mission: z.string().regex(/^[a-z0-9_]+$/) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ patientId: z.uuid(), mission: z.string().regex(/^[a-z0-9_]+$/) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
   const { supabase } = await getSessionContext();
   if (!supabase) return fail("Sua sessão expirou.");

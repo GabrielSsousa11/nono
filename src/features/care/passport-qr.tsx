@@ -14,8 +14,14 @@ export function PassportQr({ appointmentId }: { appointmentId: string }) {
     <div className="flex flex-col items-start gap-4">
       {data ? (
         <figure className="flex flex-col items-start gap-2">
-          <img src={`data:image/svg+xml;utf8,${encodeURIComponent(data.svg)}`} alt="QR Code de check-in" className="size-56 rounded bg-white p-2" />
-          <figcaption className="text-sm text-mist">Mostre na recepção. Válido até {fmtTime(data.expiresAt)}. O código não contém dados pessoais.</figcaption>
+          <img
+            src={`data:image/svg+xml;utf8,${encodeURIComponent(data.svg)}`}
+            alt="QR Code de check-in"
+            className="size-56 rounded bg-white p-2"
+          />
+          <figcaption className="text-sm text-mist">
+            Mostre na recepção. Válido até {fmtTime(data.expiresAt)}. O código não contém dados pessoais.
+          </figcaption>
         </figure>
       ) : null}
       <form action={action}>
@@ -24,7 +30,11 @@ export function PassportQr({ appointmentId }: { appointmentId: string }) {
           {pending ? "Gerando" : data ? "Gerar novo código" : "Gerar QR Code de check-in"}
         </button>
       </form>
-      {state.status === "error" && <p role="alert" className="text-sm text-danger">{state.message}</p>}
+      {state.status === "error" && (
+        <p role="alert" className="text-sm text-danger">
+          {state.message}
+        </p>
+      )}
     </div>
   );
 }

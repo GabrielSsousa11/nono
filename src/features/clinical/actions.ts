@@ -19,10 +19,19 @@ export async function addClinicalRecord(_p: ActionState, fd: FormData): Promise<
   const ctx = await requireStaff("clinical.write");
   if (!ctx) return DENIED;
   const v = z
-    .object({ patientId: uuid, kind: z.enum(["anamnesis", "evolution", "exam", "note"]), content: z.string().trim().min(3, "Escreva o registro.").max(10000), visible: z.string().optional() })
+    .object({
+      patientId: uuid,
+      kind: z.enum(["anamnesis", "evolution", "exam", "note"]),
+      content: z.string().trim().min(3, "Escreva o registro.").max(10000),
+      visible: z.string().optional(),
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
-  const { data: pro } = await ctx.supabase.from("professionals").select("id").eq("profile_id", ctx.user.id).maybeSingle();
+  const { data: pro } = await ctx.supabase
+    .from("professionals")
+    .select("id")
+    .eq("profile_id", ctx.user.id)
+    .maybeSingle();
   const { error } = await ctx.supabase.from("clinical_records").insert({
     patient_id: v.data.patientId,
     kind: v.data.kind,
@@ -51,8 +60,12 @@ export async function addToothRecord(_p: ActionState, fd: FormData): Promise<Act
     })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
-  if (v.data.state === "completed" && !v.data.performedOn) return fail("Informe a data em que o procedimento foi realizado.");
-  const surfaces = fd.getAll("surfaces").map(String).filter((s) => ["M", "D", "O", "I", "V", "L", "P"].includes(s));
+  if (v.data.state === "completed" && !v.data.performedOn)
+    return fail("Informe a data em que o procedimento foi realizado.");
+  const surfaces = fd
+    .getAll("surfaces")
+    .map(String)
+    .filter((s) => ["M", "D", "O", "I", "V", "L", "P"].includes(s));
   const { error } = await ctx.supabase.from("tooth_records").insert({
     patient_id: v.data.patientId,
     tooth_fdi: v.data.tooth,
@@ -74,7 +87,10 @@ export async function supersedeToothRecord(_p: ActionState, fd: FormData): Promi
   if (!ctx) return DENIED;
   const v = z.object({ id: uuid, patientId: uuid }).safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
-  const { error } = await ctx.supabase.from("tooth_records").update({ superseded_at: new Date().toISOString() }).eq("id", v.data.id);
+  const { error } = await ctx.supabase
+    .from("tooth_records")
+    .update({ superseded_at: new Date().toISOString() })
+    .eq("id", v.data.id);
   if (error) return fail(rpcErrorMessage(error));
   refresh(v.data.patientId);
   return ok("Registro marcado como substituído (o histórico é mantido).");
@@ -83,9 +99,13 @@ export async function supersedeToothRecord(_p: ActionState, fd: FormData): Promi
 export async function ensureDentalChart(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("clinical.write");
   if (!ctx) return DENIED;
-  const v = z.object({ patientId: uuid, dentition: z.enum(["permanent", "deciduous", "mixed"]) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ patientId: uuid, dentition: z.enum(["permanent", "deciduous", "mixed"]) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
-  const { error } = await ctx.supabase.from("dental_charts").upsert({ patient_id: v.data.patientId, dentition: v.data.dentition }, { onConflict: "patient_id" });
+  const { error } = await ctx.supabase
+    .from("dental_charts")
+    .upsert({ patient_id: v.data.patientId, dentition: v.data.dentition }, { onConflict: "patient_id" });
   if (error) return fail(rpcErrorMessage(error));
   refresh(v.data.patientId);
   return ok("Dentição atualizada.");
@@ -95,7 +115,13 @@ export async function createPlan(_p: ActionState, fd: FormData): Promise<ActionS
   const ctx = await requireStaff("clinical.write");
   if (!ctx) return DENIED;
   const v = z
-    .object({ patientId: uuid, title: z.string().trim().min(3, "Dê um título ao plano.").max(120), goals: z.string().trim().max(2000).optional(), estimatedEnd: date, professionalId: z.union([z.literal(""), uuid]).optional() })
+    .object({
+      patientId: uuid,
+      title: z.string().trim().min(3, "Dê um título ao plano.").max(120),
+      goals: z.string().trim().max(2000).optional(),
+      estimatedEnd: date,
+      professionalId: z.union([z.literal(""), uuid]).optional(),
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
   const { error } = await ctx.supabase.from("treatment_plans").insert({
@@ -115,7 +141,12 @@ export async function updatePlan(_p: ActionState, fd: FormData): Promise<ActionS
   const ctx = await requireStaff("clinical.write");
   if (!ctx) return DENIED;
   const v = z
-    .object({ id: uuid, patientId: uuid, status: z.enum(["draft", "active", "completed", "cancelled"]).optional(), estimatedEnd: date })
+    .object({
+      id: uuid,
+      patientId: uuid,
+      status: z.enum(["draft", "active", "completed", "cancelled"]).optional(),
+      estimatedEnd: date,
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
   const patch: Record<string, unknown> = {};
@@ -141,7 +172,13 @@ export async function addStage(_p: ActionState, fd: FormData): Promise<ActionSta
     })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
-  const { data: last } = await ctx.supabase.from("treatment_stages").select("position").eq("plan_id", v.data.planId).order("position", { ascending: false }).limit(1).maybeSingle();
+  const { data: last } = await ctx.supabase
+    .from("treatment_stages")
+    .select("position")
+    .eq("plan_id", v.data.planId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
   const { error } = await ctx.supabase.from("treatment_stages").insert({
     plan_id: v.data.planId,
     patient_id: v.data.patientId,
@@ -160,7 +197,13 @@ export async function updateStage(_p: ActionState, fd: FormData): Promise<Action
   const ctx = await requireStaff("clinical.write");
   if (!ctx) return DENIED;
   const v = z
-    .object({ id: uuid, patientId: uuid, status: z.enum(["pending", "scheduled", "in_progress", "completed", "skipped"]), estimatedDate: date, guidance: z.string().trim().max(2000).optional() })
+    .object({
+      id: uuid,
+      patientId: uuid,
+      status: z.enum(["pending", "scheduled", "in_progress", "completed", "skipped"]),
+      estimatedDate: date,
+      guidance: z.string().trim().max(2000).optional(),
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
   const patch: Record<string, unknown> = {
@@ -198,17 +241,27 @@ export async function uploadClinicalFile(_p: ActionState, fd: FormData): Promise
   if (file.size > 4.5 * 1024 * 1024) return fail("Arquivo maior que 4,5 MB.");
   const ext = ALLOWED[file.type as keyof typeof ALLOWED];
   if (!ext || (v.data.target === "photo" && ext === "pdf")) return fail("Formato não permitido.");
-  if (v.data.target === "document" && (!v.data.title || v.data.title.length < 3)) return fail("Dê um título ao documento.");
+  if (v.data.target === "document" && (!v.data.title || v.data.title.length < 3))
+    return fail("Dê um título ao documento.");
 
   // Checagem de consentimento antes do envio (o banco também exige).
   if (v.data.target === "photo") {
-    const { count } = await ctx.supabase.from("consents").select("id", { count: "exact", head: true }).eq("patient_id", v.data.patientId).eq("kind", "clinical_photos").eq("granted", true).is("revoked_at", null);
-    if (!count) return fail("Paciente sem consentimento ativo para fotografias clínicas. Registre o consentimento antes.");
+    const { count } = await ctx.supabase
+      .from("consents")
+      .select("id", { count: "exact", head: true })
+      .eq("patient_id", v.data.patientId)
+      .eq("kind", "clinical_photos")
+      .eq("granted", true)
+      .is("revoked_at", null);
+    if (!count)
+      return fail("Paciente sem consentimento ativo para fotografias clínicas. Registre o consentimento antes.");
   }
 
   const path = `${v.data.patientId}/${crypto.randomUUID()}.${ext}`;
   const bucket = v.data.target === "photo" ? "clinical-photos" : "documents";
-  const { error: upErr } = await ctx.supabase.storage.from(bucket).upload(path, file, { contentType: file.type, upsert: false });
+  const { error: upErr } = await ctx.supabase.storage
+    .from(bucket)
+    .upload(path, file, { contentType: file.type, upsert: false });
   if (upErr) return fail("Não foi possível enviar o arquivo. Tente novamente.");
 
   const { error } =
@@ -241,9 +294,14 @@ export async function uploadClinicalFile(_p: ActionState, fd: FormData): Promise
 export async function setPhotoVisibility(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("clinical.write");
   if (!ctx) return DENIED;
-  const v = z.object({ id: uuid, patientId: uuid, visible: z.enum(["true", "false"]) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ id: uuid, patientId: uuid, visible: z.enum(["true", "false"]) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
-  const { error } = await ctx.supabase.from("clinical_photos").update({ visible_to_patient: v.data.visible === "true" }).eq("id", v.data.id);
+  const { error } = await ctx.supabase
+    .from("clinical_photos")
+    .update({ visible_to_patient: v.data.visible === "true" })
+    .eq("id", v.data.id);
   if (error) return fail(rpcErrorMessage(error));
   refresh(v.data.patientId);
   return ok(v.data.visible === "true" ? "Foto liberada ao paciente." : "Foto ocultada do paciente.");

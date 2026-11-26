@@ -37,7 +37,15 @@ export async function requirePortal(selected?: string | null): Promise<PatientPo
     .select("id, full_name, social_name, birth_date, profile_id")
     .is("archived_at", null)
     .order("full_name");
-  const patients = ((data ?? []) as { id: string; full_name: string; social_name: string | null; birth_date: string | null; profile_id: string | null }[]).map((p) => ({
+  const patients = (
+    (data ?? []) as {
+      id: string;
+      full_name: string;
+      social_name: string | null;
+      birth_date: string | null;
+      profile_id: string | null;
+    }[]
+  ).map((p) => ({
     id: p.id,
     name: p.social_name || p.full_name,
     isSelf: p.profile_id === ctx.user!.id,
@@ -49,7 +57,10 @@ export async function requirePortal(selected?: string | null): Promise<PatientPo
 }
 
 /** Mensagem amigável para erros de RPC (sem detalhes internos). */
-export function rpcErrorMessage(error: { message?: string; code?: string } | null, fallback = "Não foi possível concluir. Tente novamente."): string {
+export function rpcErrorMessage(
+  error: { message?: string; code?: string } | null,
+  fallback = "Não foi possível concluir. Tente novamente.",
+): string {
   const m = error?.message ?? "";
   const known = [
     "horário indisponível",

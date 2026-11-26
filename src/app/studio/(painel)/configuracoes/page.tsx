@@ -21,7 +21,16 @@ async function Content() {
           s.type === "boolean" ? (
             <Checkbox key={s.key} label={s.label} name={s.key} defaultChecked={values[s.key] !== false} />
           ) : (
-            <Input key={s.key} label={s.label} name={s.key} type="number" min={s.min} max={s.max} required defaultValue={String(values[s.key] ?? "")} />
+            <Input
+              key={s.key}
+              label={s.label}
+              name={s.key}
+              type="number"
+              min={s.min}
+              max={s.max}
+              required
+              defaultValue={String(values[s.key] ?? "")}
+            />
           ),
         )}
       </div>
@@ -32,7 +41,10 @@ async function Content() {
 export default function SettingsPage() {
   return (
     <>
-      <StudioPageHeader title="Configurações" intro="Regras da agenda e da lista de espera. Alterações ficam registradas na auditoria." />
+      <StudioPageHeader
+        title="Configurações"
+        intro="Regras da agenda e da lista de espera. Alterações ficam registradas na auditoria."
+      />
       <Suspense fallback={<LoadingRows />}>
         <Content />
       </Suspense>

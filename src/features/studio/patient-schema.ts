@@ -16,7 +16,10 @@ export const patientSchema = z.object({
     .union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)])
     .optional()
     .transform((v) => (v ? v : null))
-    .refine((v) => !v || (v > "1900-01-01" && v <= new Date().toISOString().slice(0, 10)), "Data de nascimento inválida."),
+    .refine(
+      (v) => !v || (v > "1900-01-01" && v <= new Date().toISOString().slice(0, 10)),
+      "Data de nascimento inválida.",
+    ),
   cpf: z
     .string()
     .trim()
@@ -84,6 +87,7 @@ export const CONSENT_KINDS = [
 export function isMinor(birthDate: string | null, today = new Date()): boolean {
   if (!birthDate) return false;
   const [y, m, d] = birthDate.split("-").map(Number);
-  const age = today.getFullYear() - y - (today.getMonth() + 1 < m || (today.getMonth() + 1 === m && today.getDate() < d) ? 1 : 0);
+  const age =
+    today.getFullYear() - y - (today.getMonth() + 1 < m || (today.getMonth() + 1 === m && today.getDate() < d) ? 1 : 0);
   return age < 18;
 }

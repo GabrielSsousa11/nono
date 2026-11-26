@@ -11,8 +11,18 @@ export const metadata: Metadata = { title: "Novo paciente" };
 async function Form() {
   const ctx = await requireStaff("patients.write");
   if (!ctx) return <NotAllowed />;
-  const { data } = await ctx.supabase.from("professionals").select("id, display_name").eq("active", true).order("display_name");
-  return <PatientForm action={createPatient} professionals={(data ?? []) as { id: string; display_name: string }[]} submitLabel="Cadastrar paciente" />;
+  const { data } = await ctx.supabase
+    .from("professionals")
+    .select("id, display_name")
+    .eq("active", true)
+    .order("display_name");
+  return (
+    <PatientForm
+      action={createPatient}
+      professionals={(data ?? []) as { id: string; display_name: string }[]}
+      submitLabel="Cadastrar paciente"
+    />
+  );
 }
 
 export default function NewPatientPage() {

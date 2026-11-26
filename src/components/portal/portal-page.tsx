@@ -14,11 +14,16 @@ export function PortalHeading({ title, intro, who }: { title: string; intro?: Re
 export function NoPatientLinked() {
   return (
     <p className="max-w-xl text-mist">
-      Sua conta ainda não está vinculada a um cadastro de paciente. A clínica faz esse vínculo; se você já é paciente, fale com a recepção.
+      Sua conta ainda não está vinculada a um cadastro de paciente. A clínica faz esse vínculo; se você já é paciente,
+      fale com a recepção.
     </p>
   );
 }
 
 export function PortalLoading() {
-  return <div aria-busy="true" className="h-40 animate-pulse bg-stone/60"><span className="sr-only">Carregando…</span></div>;
+  return (
+    <div aria-busy="true" className="h-40 animate-pulse bg-stone/60">
+      <span className="sr-only">Carregando…</span>
+    </div>
+  );
 }

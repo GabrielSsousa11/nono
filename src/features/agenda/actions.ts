@@ -13,12 +13,22 @@ const refresh = () => {
 };
 
 /** Horários livres (a RPC só devolve horários, nunca dados de outros pacientes). */
-export async function getSlots(professionalId: string, serviceId: string, day: string): Promise<{ slots: string[]; error?: string }> {
-  const v = z.object({ p: z.uuid(), s: z.uuid(), d: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).safeParse({ p: professionalId, s: serviceId, d: day });
+export async function getSlots(
+  professionalId: string,
+  serviceId: string,
+  day: string,
+): Promise<{ slots: string[]; error?: string }> {
+  const v = z
+    .object({ p: z.uuid(), s: z.uuid(), d: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
+    .safeParse({ p: professionalId, s: serviceId, d: day });
   if (!v.success) return { slots: [], error: "Escolha serviço, profissional e data." };
   const { supabase, user } = await getSessionContext();
   if (!supabase || !user) return { slots: [], error: "Sua sessão expirou. Entre novamente." };
-  const { data, error } = await supabase.rpc("available_slots", { p_professional: v.data.p, p_service: v.data.s, p_day: v.data.d });
+  const { data, error } = await supabase.rpc("available_slots", {
+    p_professional: v.data.p,
+    p_service: v.data.s,
+    p_day: v.data.d,
+  });
   if (error) return { slots: [], error: rpcErrorMessage(error) };
   return { slots: ((data ?? []) as { starts_at: string }[]).map((r) => r.starts_at) };
 }
@@ -28,7 +38,10 @@ export async function professionalsFor(serviceId: string): Promise<{ id: string;
   if (!z.uuid().safeParse(serviceId).success) return [];
   const { supabase } = await getSessionContext();
   if (!supabase) return [];
-  const { data } = await supabase.from("professional_services").select("professionals(id, display_name, active)").eq("service_id", serviceId);
+  const { data } = await supabase
+    .from("professional_services")
+    .select("professionals(id, display_name, active)")
+    .eq("service_id", serviceId);
   return ((data ?? []) as unknown as { professionals: { id: string; display_name: string; active: boolean } | null }[])
     .map((r) => r.professionals)
     .filter((p): p is { id: string; display_name: string; active: boolean } => Boolean(p?.active))
@@ -37,13 +50,28 @@ export async function professionalsFor(serviceId: string): Promise<{ id: string;
 
 export async function searchPatients(q: string): Promise<{ id: string; name: string; detail: string }[]> {
   const ctx = await requireStaff("patients.read");
-  const term = q.trim().slice(0, 60).replace(/[%_,()]/g, "");
+  const term = q
+    .trim()
+    .slice(0, 60)
+    .replace(/[%_,()]/g, "");
   if (!ctx || term.length < 2) return [];
   const digits = term.replace(/\D/g, "");
-  let query = ctx.supabase.from("patients").select("id, full_name, social_name, phone, birth_date").is("archived_at", null).limit(8);
+  let query = ctx.supabase
+    .from("patients")
+    .select("id, full_name, social_name, phone, birth_date")
+    .is("archived_at", null)
+    .limit(8);
   query = digits.length >= 4 ? query.ilike("phone", `%${digits}%`) : query.ilike("full_name", `%${term}%`);
   const { data } = await query;
-  return ((data ?? []) as { id: string; full_name: string; social_name: string | null; phone: string | null; birth_date: string | null }[]).map((p) => ({
+  return (
+    (data ?? []) as {
+      id: string;
+      full_name: string;
+      social_name: string | null;
+      phone: string | null;
+      birth_date: string | null;
+    }[]
+  ).map((p) => ({
     id: p.id,
     name: p.social_name || p.full_name,
     detail: [p.birth_date, p.phone].filter(Boolean).join(" · "),
@@ -87,7 +115,11 @@ export async function setAppointmentStatus(_p: ActionState, fd: FormData): Promi
   if (!v.success) return fail("Dados inválidos.");
   const { supabase } = await getSessionContext();
   if (!supabase) return fail("Sua sessão expirou. Entre novamente.");
-  const { error } = await supabase.rpc("set_appointment_status", { p_appointment: v.data.id, p_status: v.data.status, p_reason: v.data.reason || null });
+  const { error } = await supabase.rpc("set_appointment_status", {
+    p_appointment: v.data.id,
+    p_status: v.data.status,
+    p_reason: v.data.reason || null,
+  });
   if (error) return fail(rpcErrorMessage(error));
   refresh();
   const msg: Record<string, string> = {
@@ -102,11 +134,16 @@ export async function setAppointmentStatus(_p: ActionState, fd: FormData): Promi
 }
 
 export async function rescheduleAppointment(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const v = z.object({ id: z.uuid(), startsAt: z.iso.datetime({ offset: true, message: "Escolha o novo horário." }) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ id: z.uuid(), startsAt: z.iso.datetime({ offset: true, message: "Escolha o novo horário." }) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
   const { supabase } = await getSessionContext();
   if (!supabase) return fail("Sua sessão expirou. Entre novamente.");
-  const { error } = await supabase.rpc("reschedule_appointment", { p_appointment: v.data.id, p_new_start: v.data.startsAt });
+  const { error } = await supabase.rpc("reschedule_appointment", {
+    p_appointment: v.data.id,
+    p_new_start: v.data.startsAt,
+  });
   if (error) return fail(rpcErrorMessage(error));
   refresh();
   return ok("Consulta remarcada.");

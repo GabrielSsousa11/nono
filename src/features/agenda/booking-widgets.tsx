@@ -13,7 +13,10 @@ const fieldClass =
 function Feedback({ state }: { state: ActionState }) {
   if (state.status === "idle") return null;
   return (
-    <p role={state.status === "error" ? "alert" : "status"} className={`text-sm ${state.status === "error" ? "font-medium text-danger" : "text-olive"}`}>
+    <p
+      role={state.status === "error" ? "alert" : "status"}
+      className={`text-sm ${state.status === "error" ? "font-medium text-danger" : "text-olive"}`}
+    >
       {state.message}
     </p>
   );
@@ -47,14 +50,33 @@ function SlotPicker({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex max-w-xs flex-col gap-1.5">
-        <label htmlFor={`${name}-day`} className="text-sm font-medium text-olive">Data</label>
-        <input id={`${name}-day`} type="date" min={today} value={day} onChange={(e) => setDay(e.target.value)} className={fieldClass} />
+        <label htmlFor={`${name}-day`} className="text-sm font-medium text-olive">
+          Data
+        </label>
+        <input
+          id={`${name}-day`}
+          type="date"
+          min={today}
+          value={day}
+          onChange={(e) => setDay(e.target.value)}
+          className={fieldClass}
+        />
       </div>
       <fieldset aria-busy={loading} className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-medium text-olive">Horários livres (horário de Brasília)</legend>
-        {loading && <p className="flex items-center gap-2 text-sm text-mist"><LoaderCircle aria-hidden className="size-4 animate-spin" /> Buscando horários…</p>}
-        {!loading && error && <p role="alert" className="text-sm text-danger">{error}</p>}
-        {!loading && !error && slots?.length === 0 && <p className="text-sm text-mist">Nenhum horário livre nesta data. Tente outro dia.</p>}
+        {loading && (
+          <p className="flex items-center gap-2 text-sm text-mist">
+            <LoaderCircle aria-hidden className="size-4 animate-spin" /> Buscando horários…
+          </p>
+        )}
+        {!loading && error && (
+          <p role="alert" className="text-sm text-danger">
+            {error}
+          </p>
+        )}
+        {!loading && !error && slots?.length === 0 && (
+          <p className="text-sm text-mist">Nenhum horário livre nesta data. Tente outro dia.</p>
+        )}
         {!loading && slots && slots.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {slots.map((s) => (
@@ -88,11 +110,14 @@ export function BookingWidget({
   submitLabel?: string;
 }) {
   const [formKey, setFormKey] = useState(0);
-  const [state, action, pending] = useActionState(async (prev: ActionState, fd: FormData) => {
-    const result = await bookAppointment(prev, fd);
-    if (result.status === "success") setFormKey((k) => k + 1);
-    return result;
-  }, { status: "idle" } as ActionState);
+  const [state, action, pending] = useActionState(
+    async (prev: ActionState, fd: FormData) => {
+      const result = await bookAppointment(prev, fd);
+      if (result.status === "success") setFormKey((k) => k + 1);
+      return result;
+    },
+    { status: "idle" } as ActionState,
+  );
   const [serviceId, setServiceId] = useState("");
   const [pros, setPros] = useState<{ id: string; name: string }[]>([]);
   const [professionalId, setProfessionalId] = useState("");
@@ -122,11 +147,16 @@ export function BookingWidget({
       <input type="hidden" name="patientId" value={patientId} />
       {allowSearch && (
         <div className="flex flex-col gap-2">
-          <label htmlFor="patient-search" className="text-sm font-medium text-olive">Paciente</label>
+          <label htmlFor="patient-search" className="text-sm font-medium text-olive">
+            Paciente
+          </label>
           <input
             id="patient-search"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setPatientId(""); }}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPatientId("");
+            }}
             placeholder="Digite nome ou telefone"
             autoComplete="off"
             className={fieldClass}
@@ -135,44 +165,105 @@ export function BookingWidget({
             <ul role="listbox" aria-label="Pacientes encontrados" className="flex flex-col border border-onyx/10">
               {found.map((p) => (
                 <li key={p.id}>
-                  <button type="button" role="option" aria-selected={false} className="w-full px-3 py-2 text-left text-sm hover:bg-stone" onClick={() => { setPatientId(p.id); setQuery(p.name); setFound([]); }}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={false}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-stone"
+                    onClick={() => {
+                      setPatientId(p.id);
+                      setQuery(p.name);
+                      setFound([]);
+                    }}
+                  >
                     {p.name} <span className="text-mist">{p.detail}</span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
-          {allowSearch && query.length >= 2 && !patientId && found.length === 0 && <p className="text-xs text-mist">Nenhum paciente encontrado. Cadastre em Pacientes.</p>}
+          {allowSearch && query.length >= 2 && !patientId && found.length === 0 && (
+            <p className="text-xs text-mist">Nenhum paciente encontrado. Cadastre em Pacientes.</p>
+          )}
         </div>
       )}
       {patients && patients.length > 1 && (
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="patient-fixed" className="text-sm font-medium text-olive">Para quem é a consulta</label>
-          <select id="patient-fixed" value={patientId} onChange={(e) => setPatientId(e.target.value)} className={fieldClass} required>
-            <option value="" disabled>Escolha</option>
-            {patients.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          <label htmlFor="patient-fixed" className="text-sm font-medium text-olive">
+            Para quem é a consulta
+          </label>
+          <select
+            id="patient-fixed"
+            value={patientId}
+            onChange={(e) => setPatientId(e.target.value)}
+            className={fieldClass}
+            required
+          >
+            <option value="" disabled>
+              Escolha
+            </option>
+            {patients.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </select>
         </div>
       )}
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="service" className="text-sm font-medium text-olive">Serviço</label>
-          <select id="service" name="serviceId" value={serviceId} onChange={(e) => setServiceId(e.target.value)} className={fieldClass} required>
-            <option value="" disabled>Escolha</option>
-            {services.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.duration} min)</option>)}
+          <label htmlFor="service" className="text-sm font-medium text-olive">
+            Serviço
+          </label>
+          <select
+            id="service"
+            name="serviceId"
+            value={serviceId}
+            onChange={(e) => setServiceId(e.target.value)}
+            className={fieldClass}
+            required
+          >
+            <option value="" disabled>
+              Escolha
+            </option>
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} ({s.duration} min)
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="professional" className="text-sm font-medium text-olive">Profissional</label>
-          <select id="professional" name="professionalId" value={professionalId} onChange={(e) => setProfessionalId(e.target.value)} className={fieldClass} required disabled={!serviceId}>
-            <option value="" disabled>{serviceId && pros.length === 0 ? "Nenhum profissional para este serviço" : "Escolha"}</option>
-            {pros.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          <label htmlFor="professional" className="text-sm font-medium text-olive">
+            Profissional
+          </label>
+          <select
+            id="professional"
+            name="professionalId"
+            value={professionalId}
+            onChange={(e) => setProfessionalId(e.target.value)}
+            className={fieldClass}
+            required
+            disabled={!serviceId}
+          >
+            <option value="" disabled>
+              {serviceId && pros.length === 0 ? "Nenhum profissional para este serviço" : "Escolha"}
+            </option>
+            {pros.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
       {serviceId && professionalId && <SlotPicker professionalId={professionalId} serviceId={serviceId} />}
       <div className="flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={pending || !patientId || !professionalId} className={buttonClass("solid", "min-h-11")}>
+        <button
+          type="submit"
+          disabled={pending || !patientId || !professionalId}
+          className={buttonClass("solid", "min-h-11")}
+        >
           {pending && <LoaderCircle aria-hidden className="size-4 animate-spin" />}
           {pending ? "Agendando" : submitLabel}
         </button>
@@ -183,14 +274,24 @@ export function BookingWidget({
   );
 }
 
-export function RescheduleWidget({ appointmentId, professionalId, serviceId }: { appointmentId: string; professionalId: string; serviceId: string }) {
+export function RescheduleWidget({
+  appointmentId,
+  professionalId,
+  serviceId,
+}: {
+  appointmentId: string;
+  professionalId: string;
+  serviceId: string;
+}) {
   const [state, action, pending] = useActionState(rescheduleAppointment, { status: "idle" } as ActionState);
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="id" value={appointmentId} />
       <SlotPicker professionalId={professionalId} serviceId={serviceId} />
       <div className="flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={pending} className={buttonClass("outline", "min-h-11")}>{pending ? "Remarcando" : "Confirmar novo horário"}</button>
+        <button type="submit" disabled={pending} className={buttonClass("outline", "min-h-11")}>
+          {pending ? "Remarcando" : "Confirmar novo horário"}
+        </button>
         <Feedback state={state} />
       </div>
     </form>

@@ -33,11 +33,11 @@ test.describe("página inicial (conteúdo oficial)", () => {
     expect(data.address).toBeUndefined();
   });
 
-  test("portal anuncia módulos apenas como em implantação", async ({ page }) => {
+  test("portal apresenta os módulos com o status do registro", async ({ page }) => {
     await page.goto("/");
     const portal = page.locator("#portal");
-    await expect(portal.getByText("Disponível", { exact: true })).toHaveCount(0);
-    await expect(portal.getByText("Em implantação").first()).toBeVisible();
+    await expect(portal.getByRole("heading", { name: "CG Smile 3D" })).toBeVisible();
+    await expect(portal.getByText("Disponível", { exact: true }).first()).toBeVisible();
   });
 
   test("envia cabeçalhos de segurança", async ({ request }) => {

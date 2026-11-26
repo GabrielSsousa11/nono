@@ -14,7 +14,14 @@ async function Content({ searchParams }: { searchParams: Promise<{ codigo?: stri
   const { codigo = "" } = await searchParams;
   return (
     <ActionForm action={performCheckin} submitLabel="Registrar chegada" pendingLabel="Verificando" className="max-w-xl">
-      <Input label="Código do QR Code" name="codigo" required defaultValue={/^[0-9a-f]{48}$/.test(codigo) ? codigo : ""} hint="Leia o QR Code do paciente com a câmera deste aparelho (abre esta página já preenchida) ou cole o link." autoComplete="off" />
+      <Input
+        label="Código do QR Code"
+        name="codigo"
+        required
+        defaultValue={/^[0-9a-f]{48}$/.test(codigo) ? codigo : ""}
+        hint="Leia o QR Code do paciente com a câmera deste aparelho (abre esta página já preenchida) ou cole o link."
+        autoComplete="off"
+      />
     </ActionForm>
   );
 }
@@ -22,8 +29,13 @@ async function Content({ searchParams }: { searchParams: Promise<{ codigo?: stri
 export default function CheckinPage({ searchParams }: PageProps<"/studio/checkin">) {
   return (
     <>
-      <StudioPageHeader title="Check-in" intro="Confirme a chegada pelo QR Code do CG Passport. O código vale 10 minutos e só pode ser usado uma vez." />
-      <Suspense fallback={<LoadingRows />}><Content searchParams={searchParams as Promise<{ codigo?: string }>} /></Suspense>
+      <StudioPageHeader
+        title="Check-in"
+        intro="Confirme a chegada pelo QR Code do CG Passport. O código vale 10 minutos e só pode ser usado uma vez."
+      />
+      <Suspense fallback={<LoadingRows />}>
+        <Content searchParams={searchParams as Promise<{ codigo?: string }>} />
+      </Suspense>
     </>
   );
 }

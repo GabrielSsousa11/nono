@@ -10,9 +10,36 @@ export function isValidFdi(n: number): boolean {
   return (q >= 1 && q <= 4 && t >= 1 && t <= 8) || (q >= 5 && q <= 8 && t >= 1 && t <= 5);
 }
 
-const TYPE_PERMANENT = ["", "Incisivo central", "Incisivo lateral", "Canino", "Primeiro pré-molar", "Segundo pré-molar", "Primeiro molar", "Segundo molar", "Terceiro molar"];
-const TYPE_DECIDUOUS = ["", "Incisivo central decíduo", "Incisivo lateral decíduo", "Canino decíduo", "Primeiro molar decíduo", "Segundo molar decíduo"];
-const QUADRANT = ["", "superior direito", "superior esquerdo", "inferior esquerdo", "inferior direito", "superior direito", "superior esquerdo", "inferior esquerdo", "inferior direito"];
+const TYPE_PERMANENT = [
+  "",
+  "Incisivo central",
+  "Incisivo lateral",
+  "Canino",
+  "Primeiro pré-molar",
+  "Segundo pré-molar",
+  "Primeiro molar",
+  "Segundo molar",
+  "Terceiro molar",
+];
+const TYPE_DECIDUOUS = [
+  "",
+  "Incisivo central decíduo",
+  "Incisivo lateral decíduo",
+  "Canino decíduo",
+  "Primeiro molar decíduo",
+  "Segundo molar decíduo",
+];
+const QUADRANT = [
+  "",
+  "superior direito",
+  "superior esquerdo",
+  "inferior esquerdo",
+  "inferior direito",
+  "superior direito",
+  "superior esquerdo",
+  "inferior esquerdo",
+  "inferior direito",
+];
 
 export function toothName(fdi: number): string {
   const q = Math.floor(fdi / 10);

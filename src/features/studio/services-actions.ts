@@ -44,17 +44,31 @@ export async function createService(_p: ActionState, fd: FormData): Promise<Acti
 export async function toggleService(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("services.manage");
   if (!ctx) return DENIED;
-  const v = z.object({ id: z.uuid(), field: z.enum(["active", "self_booking"]), value: z.enum(["true", "false"]) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ id: z.uuid(), field: z.enum(["active", "self_booking"]), value: z.enum(["true", "false"]) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
-  const { error } = await ctx.supabase.from("services").update({ [v.data.field]: v.data.value === "true" }).eq("id", v.data.id);
+  const { error } = await ctx.supabase
+    .from("services")
+    .update({ [v.data.field]: v.data.value === "true" })
+    .eq("id", v.data.id);
   if (error) return fail(rpcErrorMessage(error));
   return done("Atualizado.");
 }
 
 const profSchema = z.object({
   displayName: z.string().trim().min(3, "Informe o nome.").max(120),
-  croNumber: z.string().trim().regex(/^\d{0,8}$/, "CRO deve conter apenas números.").optional(),
-  croState: z.string().trim().toUpperCase().regex(/^([A-Z]{2})?$/, "UF com 2 letras.").optional(),
+  croNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{0,8}$/, "CRO deve conter apenas números.")
+    .optional(),
+  croState: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^([A-Z]{2})?$/, "UF com 2 letras.")
+    .optional(),
   profileId: z.union([z.literal(""), z.uuid()]).optional(),
 });
 
@@ -63,21 +77,25 @@ export async function createProfessional(_p: ActionState, fd: FormData): Promise
   if (!ctx) return DENIED;
   const v = profSchema.safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
-  if (Boolean(v.data.croNumber) !== Boolean(v.data.croState)) return fail("Informe número e UF do CRO, ou nenhum dos dois.");
+  if (Boolean(v.data.croNumber) !== Boolean(v.data.croState))
+    return fail("Informe número e UF do CRO, ou nenhum dos dois.");
   const { error } = await ctx.supabase.from("professionals").insert({
     display_name: v.data.displayName,
     cro_number: v.data.croNumber || null,
     cro_state: v.data.croState || null,
     profile_id: v.data.profileId || null,
   });
-  if (error) return fail(error.code === "23505" ? "CRO ou conta já vinculados a outro profissional." : rpcErrorMessage(error));
+  if (error)
+    return fail(error.code === "23505" ? "CRO ou conta já vinculados a outro profissional." : rpcErrorMessage(error));
   return done("Profissional cadastrado.");
 }
 
 export async function toggleProfessionalService(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("services.manage");
   if (!ctx) return DENIED;
-  const v = z.object({ professionalId: z.uuid(), serviceId: z.uuid(), link: z.enum(["true", "false"]) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ professionalId: z.uuid(), serviceId: z.uuid(), link: z.enum(["true", "false"]) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Dados inválidos.");
   const row = { professional_id: v.data.professionalId, service_id: v.data.serviceId };
   const { error } =
@@ -94,7 +112,12 @@ export async function addAvailability(_p: ActionState, fd: FormData): Promise<Ac
   const ctx = await requireStaff("services.manage");
   if (!ctx) return DENIED;
   const v = z
-    .object({ professionalId: z.uuid("Escolha o profissional."), weekday: z.coerce.number().int().min(0).max(6), starts: time, ends: time })
+    .object({
+      professionalId: z.uuid("Escolha o profissional."),
+      weekday: z.coerce.number().int().min(0).max(6),
+      starts: time,
+      ends: time,
+    })
     .refine((x) => x.ends > x.starts, "O fim precisa ser depois do início.")
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");

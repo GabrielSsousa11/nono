@@ -49,7 +49,9 @@ export async function setPatientArchived(_p: ActionState, fd: FormData): Promise
     .eq("id", v.data.id);
   if (error) return fail(rpcErrorMessage(error));
   refresh(v.data.id);
-  return ok(v.data.archived === "true" ? "Cadastro arquivado. O histórico é mantido pelo prazo legal." : "Cadastro reativado.");
+  return ok(
+    v.data.archived === "true" ? "Cadastro arquivado. O histórico é mantido pelo prazo legal." : "Cadastro reativado.",
+  );
 }
 
 export async function addGuardian(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -89,7 +91,9 @@ export async function addGuardian(_p: ActionState, fd: FormData): Promise<Action
 export async function revokeGuardian(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("guardians.manage");
   if (!ctx) return DENIED;
-  const v = z.object({ id: z.uuid(), patientId: z.uuid(), reason: z.string().trim().min(3, "Informe o motivo.").max(300) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ id: z.uuid(), patientId: z.uuid(), reason: z.string().trim().min(3, "Informe o motivo.").max(300) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
   const { error } = await ctx.supabase.rpc("revoke_guardian", { p_guardian_link: v.data.id, p_reason: v.data.reason });
   if (error) return fail(rpcErrorMessage(error));
@@ -103,7 +107,15 @@ export async function recordConsent(_p: ActionState, fd: FormData): Promise<Acti
   const v = z
     .object({
       patientId: z.uuid(),
-      kind: z.enum(["privacy_policy", "treatment", "clinical_photos", "photo_publicity", "communications_whatsapp", "communications_email", "birthday_messages"]),
+      kind: z.enum([
+        "privacy_policy",
+        "treatment",
+        "clinical_photos",
+        "photo_publicity",
+        "communications_whatsapp",
+        "communications_email",
+        "birthday_messages",
+      ]),
       version: z.string().trim().min(1, "Informe a versão do termo.").max(40),
       granted: z.enum(["true", "false"]),
       method: z.enum(["in_person", "signed_document"]),
@@ -128,11 +140,18 @@ export async function invitePortalAccess(_p: ActionState, fd: FormData): Promise
   const ctx = await requireStaff("patients.invite");
   if (!ctx) return DENIED;
   const v = z
-    .object({ patientId: z.uuid(), email: z.email("E-mail inválido."), guardianLinkId: z.union([z.literal(""), z.uuid()]).optional() })
+    .object({
+      patientId: z.uuid(),
+      email: z.email("E-mail inválido."),
+      guardianLinkId: z.union([z.literal(""), z.uuid()]).optional(),
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
   const admin = createAuthAdminClient();
-  if (!admin) return fail("Convites exigem a chave administrativa do servidor (SUPABASE_SERVICE_ROLE_KEY), ainda não configurada.");
+  if (!admin)
+    return fail(
+      "Convites exigem a chave administrativa do servidor (SUPABASE_SERVICE_ROLE_KEY), ainda não configurada.",
+    );
   const email = v.data.email.toLowerCase();
 
   const invited = await admin.inviteUserByEmail(email, { redirectTo: `${siteUrl()}/auth/confirm?next=/continuar` });
@@ -146,7 +165,10 @@ export async function invitePortalAccess(_p: ActionState, fd: FormData): Promise
   const { error } = v.data.guardianLinkId
     ? await ctx.supabase.rpc("link_guardian_account", { p_guardian_link: v.data.guardianLinkId, p_user: userId })
     : await ctx.supabase.rpc("link_patient_account", { p_patient: v.data.patientId, p_user: userId });
-  if (error) return fail(error.message?.includes("equipe") ? "Este e-mail pertence a um membro da equipe." : rpcErrorMessage(error));
+  if (error)
+    return fail(
+      error.message?.includes("equipe") ? "Este e-mail pertence a um membro da equipe." : rpcErrorMessage(error),
+    );
   refresh(v.data.patientId);
   return ok(invited.data.user ? `Convite enviado para ${email}.` : `${email} já tinha conta; acesso vinculado.`);
 }

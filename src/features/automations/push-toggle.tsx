@@ -11,7 +11,8 @@ function toUint8(base64: string) {
   const raw = atob((base64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
-const supported = () => typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const supported = () =>
+  typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 const noop = () => () => {};
 
 /** Ativação opcional de avisos no celular (Web Push). Nenhum conteúdo clínico é enviado. */
@@ -27,7 +28,10 @@ export function PushToggle() {
         const permission = await Notification.requestPermission();
         if (permission !== "granted") return setStatus("denied");
         const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toUint8(PUBLIC_KEY) });
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: toUint8(PUBLIC_KEY),
+        });
         const r = await savePushSubscription(sub.toJSON());
         setStatus(r.ok ? "on" : "error");
       } catch {
@@ -48,9 +52,16 @@ export function PushToggle() {
   return (
     <div className="flex flex-col items-start gap-2 text-sm">
       {status === "on" ? (
-        <button type="button" onClick={disable} disabled={pending} className="text-olive underline underline-offset-4">Desativar avisos neste aparelho</button>
+        <button type="button" onClick={disable} disabled={pending} className="text-olive underline underline-offset-4">
+          Desativar avisos neste aparelho
+        </button>
       ) : (
-        <button type="button" onClick={enable} disabled={pending} className="inline-flex items-center gap-2 text-olive underline underline-offset-4">
+        <button
+          type="button"
+          onClick={enable}
+          disabled={pending}
+          className="inline-flex items-center gap-2 text-olive underline underline-offset-4"
+        >
           <BellRing aria-hidden className="size-4" /> Receber avisos neste aparelho
         </button>
       )}

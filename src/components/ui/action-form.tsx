@@ -51,7 +51,11 @@ export function ActionForm({
       {hidden && Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       {children}
       <div className="flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={pending} className={buttonClass(variant, variant === "ghost" ? "" : "min-h-11")}>
+        <button
+          type="submit"
+          disabled={pending}
+          className={buttonClass(variant, variant === "ghost" ? "" : "min-h-11")}
+        >
           {pending && <LoaderCircle aria-hidden className="size-4 animate-spin" />}
           {pending ? (pendingLabel ?? "Salvando") : submitLabel}
         </button>
@@ -104,7 +108,11 @@ export function Select({
   options,
   className = "",
   ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; name: string; options: { value: string; label: string }[] }) {
+}: React.SelectHTMLAttributes<HTMLSelectElement> & {
+  label: string;
+  name: string;
+  options: { value: string; label: string }[];
+}) {
   const id = `f-${name}-${props.id ?? ""}`;
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
@@ -157,7 +165,11 @@ export function TextArea({
   );
 }
 
-export function Checkbox({ label, name, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; name: string }) {
+export function Checkbox({
+  label,
+  name,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; name: string }) {
   return (
     <label className="flex cursor-pointer items-start gap-3 text-sm text-onyx">
       <input type="checkbox" name={name} value="on" className="mt-0.5 size-4 shrink-0 accent-olive" {...props} />

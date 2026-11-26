@@ -13,10 +13,13 @@ export async function saveSettings(_p: ActionState, fd: FormData): Promise<Actio
     if (spec.type === "boolean") value = fd.get(spec.key) === "on";
     else {
       const n = Number(fd.get(spec.key));
-      if (!Number.isInteger(n) || n < spec.min! || n > spec.max!) return fail(`${spec.label}: use um número entre ${spec.min} e ${spec.max}.`);
+      if (!Number.isInteger(n) || n < spec.min! || n > spec.max!)
+        return fail(`${spec.label}: use um número entre ${spec.min} e ${spec.max}.`);
       value = n;
     }
-    const { error } = await ctx.supabase.from("clinic_settings").upsert({ key: spec.key, value, description: spec.label, updated_by: ctx.user.id });
+    const { error } = await ctx.supabase
+      .from("clinic_settings")
+      .upsert({ key: spec.key, value, description: spec.label, updated_by: ctx.user.id });
     if (error) return fail(rpcErrorMessage(error));
   }
   revalidatePath("/studio/configuracoes");

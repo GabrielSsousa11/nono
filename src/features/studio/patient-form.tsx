@@ -25,10 +25,26 @@ export function PatientForm({
   submitLabel: string;
 }) {
   return (
-    <ActionForm action={action} submitLabel={submitLabel} hidden={values.id ? { id: values.id } : undefined} className="max-w-3xl">
+    <ActionForm
+      action={action}
+      submitLabel={submitLabel}
+      hidden={values.id ? { id: values.id } : undefined}
+      className="max-w-3xl"
+    >
       <div className="grid gap-5 sm:grid-cols-2">
-        <Input label="Nome completo" name="fullName" required defaultValue={values.full_name ?? ""} className="sm:col-span-2" />
-        <Input label="Nome social" name="socialName" defaultValue={values.social_name ?? ""} hint="Como a pessoa prefere ser chamada." />
+        <Input
+          label="Nome completo"
+          name="fullName"
+          required
+          defaultValue={values.full_name ?? ""}
+          className="sm:col-span-2"
+        />
+        <Input
+          label="Nome social"
+          name="socialName"
+          defaultValue={values.social_name ?? ""}
+          hint="Como a pessoa prefere ser chamada."
+        />
         <Input label="Data de nascimento" name="birthDate" type="date" defaultValue={values.birth_date ?? ""} />
         <Input label="CPF" name="cpf" inputMode="numeric" defaultValue={values.cpf ?? ""} />
         <Input label="Telefone" name="phone" type="tel" inputMode="tel" defaultValue={values.phone ?? ""} />
@@ -37,7 +53,10 @@ export function PatientForm({
           label="Profissional responsável"
           name="responsibleProfessionalId"
           defaultValue={values.responsible_professional_id ?? ""}
-          options={[{ value: "", label: "Não definido" }, ...professionals.map((p) => ({ value: p.id, label: p.display_name }))]}
+          options={[
+            { value: "", label: "Não definido" },
+            ...professionals.map((p) => ({ value: p.id, label: p.display_name })),
+          ]}
           className="sm:col-span-2"
         />
         <TextArea

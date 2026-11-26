@@ -14,7 +14,8 @@ import { Space } from "@/components/home/space";
 import { SyntheticBanner } from "@/components/home/synthetic-banner";
 import { Treatments } from "@/components/home/treatments";
 import { ConciergeWidget } from "@/features/concierge/concierge-widget";
-import { getSiteContent, type SiteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
+import { loadSiteContent } from "@/lib/content/remote";
 import { siteUrl } from "@/lib/env";
 
 /** Dados estruturados apenas com informações verificadas — campos ausentes são omitidos. */
@@ -41,8 +42,8 @@ function structuredData(content: SiteContent) {
   return data;
 }
 
-export default function HomePage() {
-  const { content, synthetic } = getSiteContent();
+export default async function HomePage() {
+  const { content, synthetic } = await loadSiteContent();
 
   const nav: NavItem[] = [
     { href: "#manifesto", label: "Manifesto" },

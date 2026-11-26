@@ -32,7 +32,9 @@ export function zonedToUtc(dateStr: string, timeStr = "00:00", tz = CLINIC_TZ): 
 
 /** Data local (AAAA-MM-DD) de um instante no fuso da clínica. */
 export function localDate(instant: Date, tz = CLINIC_TZ): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(instant);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    instant,
+  );
 }
 
 export function addDays(dateStr: string, days: number): string {
@@ -65,12 +67,16 @@ export function isIsoDate(v: unknown): v is string {
 
 const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("pt-BR", { timeZone: CLINIC_TZ, ...opts });
 export const fmtTime = (d: string | Date) => fmt({ hour: "2-digit", minute: "2-digit" }).format(new Date(d));
-export const fmtDate = (d: string | Date) => fmt({ day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(d));
-export const fmtDateLong = (d: string | Date) => fmt({ weekday: "long", day: "numeric", month: "long" }).format(new Date(d));
+export const fmtDate = (d: string | Date) =>
+  fmt({ day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(d));
+export const fmtDateLong = (d: string | Date) =>
+  fmt({ weekday: "long", day: "numeric", month: "long" }).format(new Date(d));
 export const fmtDateTime = (d: string | Date) => fmt({ dateStyle: "short", timeStyle: "short" }).format(new Date(d));
 /** Para datas puras (AAAA-MM-DD), sem deslocar pelo fuso. */
-export const fmtPlainDate = (s: string, opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "2-digit", year: "numeric" }) =>
-  new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC", ...opts }).format(new Date(`${s}T12:00:00Z`));
+export const fmtPlainDate = (
+  s: string,
+  opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "2-digit", year: "numeric" },
+) => new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC", ...opts }).format(new Date(`${s}T12:00:00Z`));
 
 export function fmtMoney(cents: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
@@ -78,7 +84,10 @@ export function fmtMoney(cents: number): string {
 
 /** "150,00" ou "150" → 15000. Retorna null se inválido. */
 export function parseMoney(input: string): number | null {
-  const clean = input.trim().replace(/[R$\s.]/g, "").replace(",", ".");
+  const clean = input
+    .trim()
+    .replace(/[R$\s.]/g, "")
+    .replace(",", ".");
   if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
   return Math.round(Number(clean) * 100);
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { PageShell } from "@/components/ui/page-shell";
 import { PRIVACY_POLICY_VERSION } from "@/features/booking/schema";
-import { getSiteContent } from "@/lib/content";
+import { loadSiteContent } from "@/lib/content/remote";
 
 export const metadata: Metadata = {
   title: "Política de privacidade",
@@ -24,8 +24,8 @@ const PENDING = "a ser informado pela clínica";
  * Política descreve SOMENTE o que a plataforma faz de fato nesta versão.
  * Deve ser revisada por profissional jurídico antes da publicação (ver docs/SECURITY_LGPD.md).
  */
-export default function PrivacyPage() {
-  const { content } = getSiteContent();
+export default async function PrivacyPage() {
+  const { content } = await loadSiteContent();
   const { legal, contact } = content;
 
   return (

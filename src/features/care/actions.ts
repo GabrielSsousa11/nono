@@ -34,17 +34,28 @@ export async function saveProtocol(_p: ActionState, fd: FormData): Promise<Actio
     row.approved_by = ctx.user.id;
     row.approved_at = new Date().toISOString();
   }
-  const { error } = v.data.id ? await ctx.supabase.from("care_protocols").update(row).eq("id", v.data.id) : await ctx.supabase.from("care_protocols").insert(row);
+  const { error } = v.data.id
+    ? await ctx.supabase.from("care_protocols").update(row).eq("id", v.data.id)
+    : await ctx.supabase.from("care_protocols").insert(row);
   if (error) return fail(rpcErrorMessage(error));
   revalidatePath("/studio/cuidados");
-  return ok(v.data.approve === "on" ? "Protocolo salvo e aprovado." : "Protocolo salvo. Aguarda aprovação de uma dentista.");
+  return ok(
+    v.data.approve === "on" ? "Protocolo salvo e aprovado." : "Protocolo salvo. Aguarda aprovação de uma dentista.",
+  );
 }
 
 export async function assignProtocol(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("care.manage");
   if (!ctx) return fail("Sem permissão.");
   const v = z
-    .object({ patientId: z.uuid(), protocolId: z.uuid("Escolha o protocolo."), note: z.string().trim().max(1000).optional(), interval: z.union([z.literal(""), z.coerce.number().int().min(1).max(730)]).optional(), firstDue: date, ends: date })
+    .object({
+      patientId: z.uuid(),
+      protocolId: z.uuid("Escolha o protocolo."),
+      note: z.string().trim().max(1000).optional(),
+      interval: z.union([z.literal(""), z.coerce.number().int().min(1).max(730)]).optional(),
+      firstDue: date,
+      ends: date,
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
   const { error } = await ctx.supabase.rpc("assign_care_protocol", {
@@ -75,7 +86,13 @@ export async function saveHabitGoal(_p: ActionState, fd: FormData): Promise<Acti
   const ctx = await requireStaff("care.manage");
   if (!ctx) return fail("Sem permissão.");
   const v = z
-    .object({ patientId: z.uuid(), brushing: z.coerce.number().int().min(1).max(3), flossing: z.coerce.number().int().min(0).max(2), seconds: z.coerce.number().int().min(60).max(240), note: z.string().trim().max(300).optional() })
+    .object({
+      patientId: z.uuid(),
+      brushing: z.coerce.number().int().min(1).max(3),
+      flossing: z.coerce.number().int().min(0).max(2),
+      seconds: z.coerce.number().int().min(60).max(240),
+      note: z.string().trim().max(300).optional(),
+    })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail("Use 1 a 3 escovações, 0 a 2 usos de fio e 60 a 240 segundos.");
   const { error } = await ctx.supabase.from("habit_goals").upsert({
@@ -106,9 +123,15 @@ export async function acknowledgeCare(_p: ActionState, fd: FormData): Promise<Ac
 export async function staffReply(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("messages.manage");
   if (!ctx) return fail("Sem permissão.");
-  const v = z.object({ patientId: z.uuid(), body: z.string().trim().min(2, "Escreva a resposta.").max(2000) }).safeParse(Object.fromEntries(fd));
+  const v = z
+    .object({ patientId: z.uuid(), body: z.string().trim().min(2, "Escreva a resposta.").max(2000) })
+    .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");
-  const { error } = await ctx.supabase.rpc("send_patient_message", { p_patient: v.data.patientId, p_body: v.data.body, p_topic: null });
+  const { error } = await ctx.supabase.rpc("send_patient_message", {
+    p_patient: v.data.patientId,
+    p_body: v.data.body,
+    p_topic: null,
+  });
   if (error) return fail(rpcErrorMessage(error));
   await ctx.supabase.rpc("mark_messages_read", { p_patient: v.data.patientId });
   revalidatePath("/studio/mensagens");
@@ -125,7 +148,12 @@ export async function issueCheckin(_p: ActionState, fd: FormData): Promise<Actio
   if (error) return fail(rpcErrorMessage(error));
   const { token, expires_at } = data as { token: string; expires_at: string };
   const url = `${siteUrl()}/studio/checkin?codigo=${token}`;
-  const svg = await QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#202420", light: "#ffffff" }, errorCorrectionLevel: "M" });
+  const svg = await QRCode.toString(url, {
+    type: "svg",
+    margin: 1,
+    color: { dark: "#202420", light: "#ffffff" },
+    errorCorrectionLevel: "M",
+  });
   return ok("QR Code gerado.", { svg, expiresAt: expires_at, code: token.slice(0, 8).toUpperCase() });
 }
 
@@ -133,8 +161,9 @@ export async function performCheckin(_p: ActionState, fd: FormData): Promise<Act
   const ctx = await requireStaff("checkin.perform");
   if (!ctx) return fail("Sem permissão.");
   const raw = String(fd.get("codigo") ?? "").trim();
-  const token = raw.includes("codigo=") ? new URL(raw, siteUrl()).searchParams.get("codigo") ?? "" : raw;
-  if (!/^[0-9a-f]{48}$/.test(token)) return fail("Código inválido. Leia o QR Code do paciente ou cole o link completo.");
+  const token = raw.includes("codigo=") ? (new URL(raw, siteUrl()).searchParams.get("codigo") ?? "") : raw;
+  if (!/^[0-9a-f]{48}$/.test(token))
+    return fail("Código inválido. Leia o QR Code do paciente ou cole o link completo.");
   const { data, error } = await ctx.supabase.rpc("checkin_with_token", { p_token: token });
   if (error) return fail(rpcErrorMessage(error));
   revalidatePath("/studio/agenda");

@@ -16,11 +16,16 @@ export function PatientPicker({ name = "patientId", label = "Paciente" }: { name
   }, [query, selected]);
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={`${name}-search`} className="text-sm font-medium text-olive">{label}</label>
+      <label htmlFor={`${name}-search`} className="text-sm font-medium text-olive">
+        {label}
+      </label>
       <input
         id={`${name}-search`}
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setSelected(""); }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setSelected("");
+        }}
         placeholder="Digite nome ou telefone"
         autoComplete="off"
         className="w-full border-0 border-b border-onyx/25 bg-transparent py-2.5 focus:border-olive focus:ring-0 focus:outline-none"
@@ -30,7 +35,15 @@ export function PatientPicker({ name = "patientId", label = "Paciente" }: { name
         <ul className="flex flex-col border border-onyx/10">
           {found.map((p) => (
             <li key={p.id}>
-              <button type="button" className="w-full px-3 py-2 text-left text-sm hover:bg-stone" onClick={() => { setSelected(p.id); setQuery(p.name); setFound([]); }}>
+              <button
+                type="button"
+                className="w-full px-3 py-2 text-left text-sm hover:bg-stone"
+                onClick={() => {
+                  setSelected(p.id);
+                  setQuery(p.name);
+                  setFound([]);
+                }}
+              >
                 {p.name} <span className="text-mist">{p.detail}</span>
               </button>
             </li>

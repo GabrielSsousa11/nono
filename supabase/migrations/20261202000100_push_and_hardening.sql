@@ -64,3 +64,9 @@ revoke all on function public.claim_push_batch(text, integer) from public;
 revoke all on function public.drop_push_subscription(text, text) from public;
 grant execute on function public.claim_push_batch(text, integer) to anon, authenticated;
 grant execute on function public.drop_push_subscription(text, text) to anon, authenticated;
+
+-- Gestão de conteúdo: equipe com content.manage cria novas versões (append-only).
+create policy "website_content: gestão cria versões" on public.website_content for insert to authenticated
+  with check ((select private.has_permission('content.manage'))
+              and (not published or (verified_by = (select auth.uid()) and verified_at is not null)));
+revoke update, delete on public.website_content from anon, authenticated;

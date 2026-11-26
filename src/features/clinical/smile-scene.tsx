@@ -95,10 +95,28 @@ export default function SmileScene({
       <directionalLight position={[-4, 2, -3]} intensity={0.4} color="#b29a70" />
       <group position={[0, 0, 1.3]}>
         {upper.map((t) => (
-          <Tooth key={t.fdi} fdi={t.fdi} position={[t.x, 0.08, t.z]} rotation={t.rot} upper state={summary[t.fdi]} selected={selected === t.fdi} onSelect={onSelect} />
+          <Tooth
+            key={t.fdi}
+            fdi={t.fdi}
+            position={[t.x, 0.08, t.z]}
+            rotation={t.rot}
+            upper
+            state={summary[t.fdi]}
+            selected={selected === t.fdi}
+            onSelect={onSelect}
+          />
         ))}
         {lower.map((t) => (
-          <Tooth key={t.fdi} fdi={t.fdi} position={[t.x, -0.08, t.z]} rotation={t.rot} upper={false} state={summary[t.fdi]} selected={selected === t.fdi} onSelect={onSelect} />
+          <Tooth
+            key={t.fdi}
+            fdi={t.fdi}
+            position={[t.x, -0.08, t.z]}
+            rotation={t.rot}
+            upper={false}
+            state={summary[t.fdi]}
+            selected={selected === t.fdi}
+            onSelect={onSelect}
+          />
         ))}
       </group>
       <OrbitControls enablePan={false} minDistance={4} maxDistance={11} maxPolarAngle={Math.PI * 0.62} />

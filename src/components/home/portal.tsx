@@ -14,7 +14,7 @@ export function Portal() {
             id="portal-title"
             tone="dark"
             title="Seu tratamento, também fora do consultório"
-            intro="Um portal privado, exclusivo para pacientes da clínica, para acompanhar etapas, orientações e cuidados diários. Os módulos são liberados à medida que são concluídos e validados."
+            intro="Um portal privado, exclusivo para pacientes da clínica, para acompanhar etapas, orientações e cuidados diários. Cada módulo é liberado pela clínica conforme o seu tratamento."
           />
           <div className="flex flex-col gap-3 xs:flex-row xs:items-center">
             <Link href="/entrar" className={buttonClass("light")}>

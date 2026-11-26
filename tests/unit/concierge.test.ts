@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { answer, normalize, type ConciergeContext } from "@/features/concierge/engine";
 
-const empty: ConciergeContext = { clinicName: "Clínica Teste", authenticated: false, hours: [], address: null, phone: null, whatsapp: null, email: null, services: [], faq: [] };
+const empty: ConciergeContext = {
+  clinicName: "Clínica Teste",
+  authenticated: false,
+  hours: [],
+  address: null,
+  phone: null,
+  whatsapp: null,
+  email: null,
+  services: [],
+  faq: [],
+};
 const full: ConciergeContext = {
   ...empty,
   authenticated: true,
@@ -18,7 +28,12 @@ describe("normalize", () => {
 });
 
 describe("segurança clínica", () => {
-  it.each(["Estou com dor no dente, o que tomo?", "Qual antibiótico devo usar?", "minha gengiva está sangrando", "isso é grave?"])("não responde clinicamente: %s", (q) => {
+  it.each([
+    "Estou com dor no dente, o que tomo?",
+    "Qual antibiótico devo usar?",
+    "minha gengiva está sangrando",
+    "isso é grave?",
+  ])("não responde clinicamente: %s", (q) => {
     const r = answer(q, full);
     expect(r.intent).toMatch(/^clinical/);
     expect(r.text).toMatch(/não posso|procure atendimento/i);
@@ -41,9 +56,12 @@ describe("intenções", () => {
     expect(answer("quando é minha consulta?", empty).actions[0].href).toBe("/entrar");
     expect(answer("quando é minha próxima consulta?", full).text).toContain("Dra. Teste");
   });
-  it("remarcação leva ao portal", () => expect(answer("preciso remarcar", full).actions[0].href).toBe("/portal/agenda"));
-  it("disponibilidade lista horários livres", () => expect(answer("tem vaga essa semana?", full).text).toContain("terça, 09:00"));
-  it("agendamento anônimo leva ao formulário", () => expect(answer("quero marcar uma avaliação", empty).actions[0].href).toBe("/#agendamento"));
+  it("remarcação leva ao portal", () =>
+    expect(answer("preciso remarcar", full).actions[0].href).toBe("/portal/agenda"));
+  it("disponibilidade lista horários livres", () =>
+    expect(answer("tem vaga essa semana?", full).text).toContain("terça, 09:00"));
+  it("agendamento anônimo leva ao formulário", () =>
+    expect(answer("quero marcar uma avaliação", empty).actions[0].href).toBe("/#agendamento"));
   it("explica serviço cadastrado com ressalva", () => {
     const r = answer("como funciona o clareamento?", full);
     expect(r.intent).toBe("service");

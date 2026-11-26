@@ -5,5 +5,9 @@ export type ActionState =
 
 export const IDLE: ActionState = { status: "idle" };
 
-export const ok = (message: string, data?: Record<string, unknown>): ActionState => ({ status: "success", message, data });
+export const ok = (message: string, data?: Record<string, unknown>): ActionState => ({
+  status: "success",
+  message,
+  data,
+});
 export const fail = (message: string): ActionState => ({ status: "error", message });

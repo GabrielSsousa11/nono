@@ -19,7 +19,10 @@ const SUGGESTIONS = ["Como agendar?", "Horário de atendimento", "Quero remarcar
 export function ConciergeWidget() {
   const dialog = useRef<HTMLDialogElement>(null);
   const [turns, setTurns] = useState<Turn[]>([
-    { from: "bot", text: "Olá! Sou a recepção digital. Respondo dúvidas administrativas — não faço diagnósticos. Como posso ajudar?" },
+    {
+      from: "bot",
+      text: "Olá! Sou a recepção digital. Respondo dúvidas administrativas — não faço diagnósticos. Como posso ajudar?",
+    },
   ]);
   const [input, setInput] = useState("");
   const [pending, start] = useTransition();
@@ -64,24 +67,42 @@ export function ConciergeWidget() {
               <p className="font-display text-xl">Recepção digital</p>
               <p className="text-xs text-mist">Respostas automáticas sobre a clínica. Não armazenamos esta conversa.</p>
             </div>
-            <button type="button" aria-label="Fechar" className="grid size-10 place-items-center" onClick={() => dialog.current?.close()}>
+            <button
+              type="button"
+              aria-label="Fechar"
+              className="grid size-10 place-items-center"
+              onClick={() => dialog.current?.close()}
+            >
               <X aria-hidden className="size-5" />
             </button>
           </header>
           <ol ref={list} className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4" aria-live="polite">
             {turns.map((t, i) => (
-              <li key={i} className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-sm ${t.from === "user" ? "self-end bg-olive text-ivory" : "self-start bg-stone"}`}>
+              <li
+                key={i}
+                className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-sm ${t.from === "user" ? "self-end bg-olive text-ivory" : "self-start bg-stone"}`}
+              >
                 <span className="sr-only">{t.from === "user" ? "Você:" : "Recepção:"}</span>
                 {t.text}
                 {t.actions && t.actions.length > 0 && (
                   <span className="mt-2 flex flex-wrap gap-2">
                     {t.actions.map((a) =>
                       a.handoff ? (
-                        <button key={a.label} type="button" onClick={() => handoff(t.question ?? "")} className="rounded-full border border-olive px-3 py-1 text-xs text-olive">
+                        <button
+                          key={a.label}
+                          type="button"
+                          onClick={() => handoff(t.question ?? "")}
+                          className="rounded-full border border-olive px-3 py-1 text-xs text-olive"
+                        >
                           {a.label}
                         </button>
                       ) : (
-                        <Link key={a.label} href={a.href!} onClick={() => dialog.current?.close()} className="rounded-full border border-olive px-3 py-1 text-xs text-olive">
+                        <Link
+                          key={a.label}
+                          href={a.href!}
+                          onClick={() => dialog.current?.close()}
+                          className="rounded-full border border-olive px-3 py-1 text-xs text-olive"
+                        >
                           {a.label}
                         </Link>
                       ),
@@ -95,7 +116,12 @@ export function ConciergeWidget() {
           {turns.length <= 1 && (
             <div className="flex flex-wrap gap-2 px-5 pb-3">
               {SUGGESTIONS.map((s) => (
-                <button key={s} type="button" onClick={() => ask(s)} className="rounded-full border border-onyx/15 px-3 py-1.5 text-xs">
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => ask(s)}
+                  className="rounded-full border border-onyx/15 px-3 py-1.5 text-xs"
+                >
                   {s}
                 </button>
               ))}
@@ -108,9 +134,23 @@ export function ConciergeWidget() {
               ask(input);
             }}
           >
-            <label htmlFor="concierge-input" className="sr-only">Sua pergunta</label>
-            <input id="concierge-input" value={input} onChange={(e) => setInput(e.target.value)} maxLength={500} placeholder="Escreva sua dúvida" className="min-h-11 flex-1 rounded-full border border-onyx/15 bg-transparent px-4 text-sm focus:border-olive focus:ring-0 focus:outline-none" />
-            <button type="submit" disabled={pending || !input.trim()} aria-label="Enviar" className="grid size-11 place-items-center rounded-full bg-olive text-ivory disabled:opacity-50">
+            <label htmlFor="concierge-input" className="sr-only">
+              Sua pergunta
+            </label>
+            <input
+              id="concierge-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              maxLength={500}
+              placeholder="Escreva sua dúvida"
+              className="min-h-11 flex-1 rounded-full border border-onyx/15 bg-transparent px-4 text-sm focus:border-olive focus:ring-0 focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={pending || !input.trim()}
+              aria-label="Enviar"
+              className="grid size-11 place-items-center rounded-full bg-olive text-ivory disabled:opacity-50"
+            >
               <Send aria-hidden className="size-4" />
             </button>
           </form>

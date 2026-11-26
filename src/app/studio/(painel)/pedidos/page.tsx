@@ -59,7 +59,12 @@ async function Requests() {
           <div className="flex flex-col items-start gap-2">
             <BookingStatusForm id={r.id} status={r.status as BookingStatus} label={r.full_name} />
             {r.status !== "scheduled" && can(access, "agenda.write") && (
-              <Link href={`/studio/agenda?pedido=${r.id}`} className="text-sm text-olive underline decoration-gold underline-offset-4">Agendar este pedido</Link>
+              <Link
+                href={`/studio/agenda?pedido=${r.id}`}
+                className="text-sm text-olive underline decoration-gold underline-offset-4"
+              >
+                Agendar este pedido
+              </Link>
             )}
           </div>
         </li>

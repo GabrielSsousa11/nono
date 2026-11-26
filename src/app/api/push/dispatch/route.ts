@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import webpush from "web-push";
+import * as webpush from "web-push";
 import { createAnonServerClient } from "@/lib/supabase/anon";
 
 /**

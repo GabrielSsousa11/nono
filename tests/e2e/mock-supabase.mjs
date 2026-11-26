@@ -146,6 +146,10 @@ createServer((req, res) => {
     }
 
     // ---- Tabelas ----
+    if (url.pathname === "/rest/v1/notifications" && req.method === "HEAD") {
+      res.writeHead(200, { "content-range": "*/0" });
+      return res.end();
+    }
     if (url.pathname === "/rest/v1/profiles") {
       const row = { full_name: role === "admin" ? "Admin Sintética" : "Paciente Sintético", id: USERS[role].id };
       return json(200, wantsObject ? row : [row]);
@@ -192,7 +196,47 @@ createServer((req, res) => {
     }
     if (url.pathname === "/rest/v1/consents") return json(200, role === "patient" ? consents : []);
     if (url.pathname === "/rest/v1/patient_guardians") return json(200, []);
-
+    if (url.pathname === "/rest/v1/rpc/daily_summary") {
+      return json(200, {
+        today: new Date().toISOString().slice(0, 10),
+        goal: { brushing_per_day: 2, flossing_per_day: 1, brushing_seconds: 120, note: null },
+        today_counts: { brushing: 0, flossing: 0 },
+        current_streak: 0,
+        best_streak: 0,
+        total_goal_days: 0,
+        level: "Primeiro passo",
+        adherence_percent: null,
+        adherence_window_days: 0,
+        calendar: [],
+      });
+    }
+    if (url.pathname === "/rest/v1/rpc/clinic_indicators") {
+      return json(200, {
+        min_sample: 5,
+        appointments: { total: 0, completed: 0, cancelled: 0, no_show: 0 },
+        cancellation_rate: null,
+        no_show_rate: null,
+        occupancy_rate: null,
+        available_hours: 0,
+        new_patients: 0,
+        returning_patients: 0,
+        booking_requests: { total: 2, scheduled: 0, conversion_rate: null },
+        busiest_slots: [],
+        satisfaction: { answers: 0, average: null, nps: null },
+        revenue_cents: 0,
+        pending_cents: 0,
+        overdue_cents: 0,
+        expenses_cents: 0,
+        cash_flow: [],
+      });
+    }
+    // Demais tabelas/RPCs: vazio (as telas devem lidar com ausência de dados).
+    if (req.method === "HEAD") {
+      res.writeHead(200, { "content-range": "*/0" });
+      return res.end();
+    }
+    if (url.pathname.startsWith("/rest/v1/rpc/")) return json(200, null);
+    if (url.pathname.startsWith("/rest/v1/")) return json(200, wantsObject ? null : []);
     json(404, { message: `not mocked: ${req.method} ${url.pathname}` });
   });
 }).listen(port, "127.0.0.1", () => console.log(`mock supabase on ${port}`));
