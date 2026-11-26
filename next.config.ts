@@ -53,6 +53,10 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   output: "standalone",
   poweredByHeader: false,
+  experimental: {
+    // Fotos são comprimidas no navegador (máx. ~2 MB); limite compatível com hospedagens gratuitas.
+    serverActions: { bodySizeLimit: "5mb" },
+  },
   reactStrictMode: true,
   env: {
     CG_BUILD_YEAR: String(new Date().getFullYear()),

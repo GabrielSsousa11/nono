@@ -82,3 +82,8 @@ export function parseMoney(input: string): number | null {
   if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
   return Math.round(Number(clean) * 100);
 }
+
+/** Instante (ISO) deslocado em horas a partir de agora. */
+export function isoFromNow(hours = 0): string {
+  return new Date(Date.now() + hours * 3600_000).toISOString();
+}
