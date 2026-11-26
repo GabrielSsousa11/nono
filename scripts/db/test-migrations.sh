@@ -15,4 +15,5 @@ if [ "$(id -u)" = "0" ]; then chown -R postgres "$TMP" 2>/dev/null || true; RUNA
 PSQL=("${RUNAS[@]}" "$PGBIN/psql" -h "$TMP" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q)
 "${PSQL[@]}" -f "$ROOT/supabase/tests/stub_supabase.sql"
 for f in "$ROOT"/supabase/migrations/*.sql; do echo "→ migration $(basename "$f")"; "${PSQL[@]}" -f "$f"; done
+cd "$ROOT"
 for f in $(ls "$ROOT"/supabase/tests/*.test.sql | sort -V); do echo "→ teste $(basename "$f")"; "${PSQL[@]}" -t -f "$f"; done

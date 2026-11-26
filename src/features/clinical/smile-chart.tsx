@@ -51,7 +51,7 @@ function Odontogram2D({
   return (
     <div className="flex flex-col gap-3 overflow-x-auto py-2" role="group" aria-label="Odontograma em duas dimensões">
       {rows.map((row, i) => (
-        <div key={i} className="mx-auto flex gap-1">
+        <div key={i} className="flex w-max gap-0.5 sm:mx-auto">
           {row.map((n, j) => {
             const st = summary[n];
             return (
@@ -61,7 +61,7 @@ function Odontogram2D({
                 onClick={() => onSelect(n)}
                 aria-pressed={selected === n}
                 aria-label={`Dente ${n}, ${toothName(n)}${st ? `: ${stateLabel[st]}` : ""}`}
-                className={`flex h-14 w-9 flex-col items-center justify-between rounded-md border py-1 text-[0.6875rem] ${j === row.length / 2 ? "ml-3" : ""} ${selected === n ? "border-gold-ink ring-2 ring-gold" : "border-onyx/20"}`}
+                className={`flex h-12 w-[1.875rem] shrink-0 flex-col items-center justify-between rounded-md border py-1 text-[0.6875rem] ${j === row.length / 2 ? "ml-2" : ""} ${selected === n ? "border-gold-ink ring-2 ring-gold" : "border-onyx/20"}`}
                 style={{
                   background: st ? stateColor[st] : stateColor.none,
                   color: st === "completed" || st === "existing" ? "#f7f4ed" : "#202420",

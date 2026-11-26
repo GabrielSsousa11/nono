@@ -24,3 +24,9 @@ confirmados por escrito pela clínica (na Fase 10, pelo CG Studio).
 
 Depoimentos de pacientes não serão publicados sem autorização específica e verificação das normas profissionais
 aplicáveis.
+
+## Textos da plataforma que exigem revisão da dentista responsável
+
+- Missões educativas do CG Daily (`supabase/migrations/20261130000100_engagement.sql`, tabela `education_missions`).
+- Protocolos de cuidado (criados no Studio; só são enviados após aprovação de uma dentista).
+- Explicações dos tratamentos publicados (Studio → Conteúdo do site).

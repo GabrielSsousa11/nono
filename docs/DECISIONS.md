@@ -76,3 +76,26 @@ vínculo (`patients.profile_id`, `patient_guardians` ativo).
 Cada concessão é uma linha; revogar marca `revoked_at`/`revoked_by`. Gatilho impede reescrever ou apagar. Titulares e
 responsáveis alteram pelo portal apenas consentimentos opcionais; tratamento e uso de imagem em divulgação exigem
 registro presencial pela equipe (`record_consent`).
+
+## ADR-014 — Recepção digital determinística
+
+O briefing pede fluxos gratuitos primeiro. O CG Concierge é um motor de intenções em TypeScript puro
+(`features/concierge/engine.ts`) que responde só com dados verificados do contexto, recusa assuntos clínicos (com
+orientação de urgência) e não armazena a conversa. Um provedor de IA pode ser plugado depois atrás da mesma
+interface `answer()`, desde que autorizado (custo e LGPD).
+
+## ADR-015 — Web Push sem service role
+
+A rota `/api/push/dispatch` autentica-se no banco com um segredo de servidor cujo SHA-256 fica em `clinic_settings`.
+As RPCs `claim_push_batch`/`drop_push_subscription` só aceitam esse segredo e devolvem apenas título e link.
+
+## ADR-016 — Conteúdo do site versionado
+
+Cada edição no CG Studio cria uma versão em `website_content`; o site lê a última versão **publicada**, que exige
+`verified_at`/`verified_by` (constraint + política). O conteúdo passa por esquemas Zod antes de entrar no site e é
+cacheado por tag (`updateTag` na publicação). Sem banco, o site usa a base verificada do código.
+
+## ADR-017 — Fotos comprimidas no navegador
+
+Hospedagens gratuitas limitam o corpo das requisições (~4,5 MB). Fotos clínicas são reduzidas no navegador (máx.
+2048 px, JPEG 0,85) antes do envio; o servidor recusa acima de 4,5 MB.

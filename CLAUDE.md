@@ -35,6 +35,9 @@ Interface 100% em **português brasileiro**. Leia `docs/ARCHITECTURE.md` e `docs
   Páginas públicas devem permanecer estáticas. Toda página protegida confere `gate === "ok"` mesmo já estando sob o
   layout que redireciona.
 - Redirecionamentos em route handlers usam `siteUrl()`, nunca `request.url` (host interno do servidor).
+- Páginas/ações do Studio usam `requireStaff(permissão)`; do portal, `requirePortal()` (paciente atual via cookie
+  `cg_patient`). Mensagens de erro de RPC passam por `rpcErrorMessage()`.
+- Formulários das áreas logadas usam `ActionForm` (`components/ui/action-form.tsx`).
 - Arquivos `"use server"` exportam apenas funções assíncronas; constantes e schemas ficam em módulos irmãos.
 - Regras de negócio puras e testáveis separadas das Server Actions (ex.: `features/booking/submit.ts` ×
   `features/booking/actions.ts`).
@@ -64,6 +67,7 @@ npm run verify          # lint + typecheck + unit + banco + build
 npm run test:e2e        # Playwright contra build de produção + mock do Supabase
 npm run test:db         # aplica migrations num Postgres descartável e roda supabase/tests (matriz de acesso)
 npm run content:check   # lista dados pendentes para publicação (sai 1 se houver bloqueantes)
+npm run db:bundle       # junta as migrations em supabase/dist/schema.sql (SQL Editor do Supabase)
 ```
 
 Antes de cada commit: `npm run verify` e, se mexeu em UI/rotas, `npm run test:e2e`.

@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     title: content.clinicName,
     description: content.tagline,
   },
-  robots: { index: true, follow: true },
+  robots: process.env.CG_DEPLOY_ENV === "preview" ? { index: false, follow: false } : { index: true, follow: true },
 };
 
 export const viewport: Viewport = {

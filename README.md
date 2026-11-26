@@ -2,7 +2,7 @@
 
 Plataforma digital da clínica: site institucional, portal do paciente e (nas próximas fases) o painel CG Studio.
 
-**Estado:** Fases 1 e 3 concluídas (Fase 3 aguardando validação em um projeto Supabase real); Fase 2 com código pronto, aguardando conteúdo oficial. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+**Estado:** fases 1 a 12 implementadas e testadas; pronta para publicação gratuita de demonstração ([docs/DEPLOY.md](docs/DEPLOY.md)). Conteúdo oficial da clínica e validação num projeto Supabase real pendentes.
 
 ## Início rápido
 
@@ -35,7 +35,7 @@ npm run content:check
 - [CLAUDE.md](CLAUDE.md) — regras permanentes do projeto
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DECISIONS.md](docs/DECISIONS.md)
 - [docs/SECURITY_LGPD.md](docs/SECURITY_LGPD.md) · [docs/HOSTING_AND_COSTS.md](docs/HOSTING_AND_COSTS.md)
-- [docs/CONTENT_VERIFICATION.md](docs/CONTENT_VERIFICATION.md)
+- [docs/CONTENT_VERIFICATION.md](docs/CONTENT_VERIFICATION.md) · [docs/DEPLOY.md](docs/DEPLOY.md) (publicação gratuita e roteiro de apresentação)
 
 ## Prévia (dados sintéticos de desenvolvimento)
 

@@ -89,11 +89,11 @@ export default function SmileScene({
   const upper = useMemo(() => layout(PERMANENT_UPPER, 3.1), []);
   const lower = useMemo(() => layout(PERMANENT_LOWER, 2.85), []);
   return (
-    <Canvas camera={{ position: [0, 3.2, 6.2], fov: 38 }} dpr={[1, 1.75]} aria-hidden>
+    <Canvas camera={{ position: [0, 4.6, 8.4], fov: 36 }} dpr={[1, 1.75]} aria-hidden>
       <hemisphereLight args={["#fffaf0", "#d5c6b2", 1]} />
       <directionalLight position={[3, 6, 4]} intensity={1.6} />
       <directionalLight position={[-4, 2, -3]} intensity={0.4} color="#b29a70" />
-      <group position={[0, 0, 1.3]}>
+      <group position={[0, -0.2, 1.4]}>
         {upper.map((t) => (
           <Tooth
             key={t.fdi}
