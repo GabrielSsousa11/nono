@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { PageShell } from "@/components/ui/page-shell";
+import { PortalHeading, PortalLoading } from "@/components/portal/portal-page";
 import { ConsentToggle } from "@/features/portal/consent-toggle";
 import { consentText, currentConsents, SELF_SERVICE_CONSENTS, type ConsentRow } from "@/features/portal/consents";
 import { getSessionContext } from "@/lib/auth/session";
@@ -128,22 +128,11 @@ async function PrivacyContent() {
 
 export default function PortalPrivacyPage() {
   return (
-    <PageShell
-      aside={
-        <Link href="/portal" className="min-h-11 content-center text-sm text-olive hover:underline">
-          Voltar ao portal
-        </Link>
-      }
-    >
-      <div className="flex flex-col gap-12">
-        <div className="flex flex-col gap-4">
-          <span className="gold-rule" aria-hidden />
-          <h1 className="font-display text-[clamp(2.5rem,5vw,4rem)] leading-none">Meus dados e privacidade</h1>
-        </div>
-        <Suspense fallback={<p className="text-mist">Carregando…</p>}>
-          <PrivacyContent />
-        </Suspense>
-      </div>
-    </PageShell>
+    <>
+      <PortalHeading title="Meus dados e privacidade" />
+      <Suspense fallback={<PortalLoading />}>
+        <PrivacyContent />
+      </Suspense>
+    </>
   );
 }

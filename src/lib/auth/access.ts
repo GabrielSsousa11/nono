@@ -26,7 +26,16 @@ export type Permission =
   | "clinical.read"
   | "clinical.write"
   | "finance.read"
-  | "finance.write";
+  | "finance.write"
+  | "agenda.read"
+  | "agenda.write"
+  | "services.manage"
+  | "waitlist.manage"
+  | "care.manage"
+  | "messages.manage"
+  | "checkin.perform"
+  | "automations.manage"
+  | "reports.read";
 
 /** Retorno da RPC `public.my_access()`. */
 export interface AccessInfo {

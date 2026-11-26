@@ -3,22 +3,32 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { StudioNav, type StudioNavItem } from "@/components/studio/studio-nav";
 import { signOut } from "@/features/auth/actions";
-import { can, gatePath, roleLabel, isStaffRole } from "@/lib/auth/access";
+import { can, gatePath, roleLabel, isStaffRole, type Permission } from "@/lib/auth/access";
 import { getSessionContext } from "@/lib/auth/session";
 
 async function GatedShell({ children }: { children: React.ReactNode }) {
   const { gate, access, user } = await getSessionContext();
   if (gate !== "ok") redirect(gatePath[gate]);
 
-  const items: StudioNavItem[] = [
-    { href: "/studio", label: "Visão geral", icon: "overview" },
-    ...(can(access, "booking_requests.manage")
-      ? [{ href: "/studio/pedidos", label: "Pedidos de agendamento", icon: "requests" as const }]
-      : []),
-    ...(can(access, "users.manage")
-      ? [{ href: "/studio/equipe", label: "Equipe e acessos", icon: "team" as const }]
-      : []),
+  const nav: [StudioNavItem, Permission | null][] = [
+    [{ href: "/studio", label: "Visão geral", icon: "overview" }, null],
+    [{ href: "/studio/agenda", label: "Agenda", icon: "agenda" }, "agenda.read"],
+    [{ href: "/studio/pacientes", label: "Pacientes", icon: "patients" }, "patients.read"],
+    [{ href: "/studio/pedidos", label: "Pedidos do site", icon: "requests" }, "booking_requests.manage"],
+    [{ href: "/studio/lista-de-espera", label: "Lista de espera", icon: "waitlist" }, "waitlist.manage"],
+    [{ href: "/studio/checkin", label: "Check-in", icon: "checkin" }, "checkin.perform"],
+    [{ href: "/studio/mensagens", label: "Mensagens", icon: "messages" }, "messages.manage"],
+    [{ href: "/studio/cuidados", label: "Protocolos de cuidado", icon: "care" }, "care.manage"],
+    [{ href: "/studio/financeiro", label: "Financeiro", icon: "finance" }, "finance.read"],
+    [{ href: "/studio/indicadores", label: "Indicadores", icon: "reports" }, "reports.read"],
+    [{ href: "/studio/servicos", label: "Serviços e horários", icon: "services" }, "services.manage"],
+    [{ href: "/studio/automacoes", label: "Automações", icon: "automations" }, "automations.manage"],
+    [{ href: "/studio/conteudo", label: "Conteúdo do site", icon: "content" }, "content.manage"],
+    [{ href: "/studio/equipe", label: "Equipe e acessos", icon: "team" }, "users.manage"],
+    [{ href: "/studio/configuracoes", label: "Configurações", icon: "settings" }, "settings.manage"],
+    [{ href: "/studio/auditoria", label: "Auditoria", icon: "audit" }, "audit.read"],
   ];
+  const items = nav.filter(([, p]) => !p || can(access, p)).map(([i]) => i);
 
   const footer = (
     <div className="flex flex-col gap-3 border-t border-ivory/15 px-3 pt-4 text-xs text-champagne">

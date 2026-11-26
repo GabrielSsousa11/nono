@@ -1,6 +1,26 @@
 "use client";
 
-import { Inbox, LayoutGrid, Menu, Users, X } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  HeartPulse,
+  Inbox,
+  LayoutGrid,
+  ListOrdered,
+  Menu,
+  MessagesSquare,
+  QrCode,
+  ScrollText,
+  Settings,
+  Stethoscope,
+  Users,
+  Wallet,
+  Workflow,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
@@ -9,10 +29,28 @@ import { Monogram } from "@/components/ui/monogram";
 export interface StudioNavItem {
   href: string;
   label: string;
-  icon: "overview" | "team" | "requests";
+  icon: keyof typeof ICONS;
 }
 
-const ICONS = { overview: LayoutGrid, team: Users, requests: Inbox };
+const ICONS = {
+  overview: LayoutGrid,
+  team: Users,
+  requests: Inbox,
+  agenda: CalendarDays,
+  patients: ClipboardList,
+  waitlist: ListOrdered,
+  messages: MessagesSquare,
+  checkin: QrCode,
+  care: HeartPulse,
+  services: Stethoscope,
+  finance: Wallet,
+  reports: BarChart3,
+  automations: Workflow,
+  content: FileText,
+  settings: Settings,
+  audit: ScrollText,
+  activity: Activity,
+};
 
 function NavList({ items, onNavigate }: { items: StudioNavItem[]; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -52,7 +90,7 @@ export function StudioNav({ items, footer }: { items: StudioNavItem[]; footer: R
           <Monogram className="size-8" />
           <span className="font-display text-xl">CG Studio</span>
         </Link>
-        <nav aria-label="CG Studio" className="flex-1">
+        <nav aria-label="CG Studio" className="-mx-1 flex-1 overflow-y-auto px-1">
           <NavList items={items} />
         </nav>
         {footer}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingRows, StudioPageHeader } from "@/components/studio/page-header";
 import { BookingStatusForm } from "@/features/studio/booking-status-form";
@@ -55,7 +56,12 @@ async function Requests() {
             </p>
             {r.message && <p className="mt-2 max-w-2xl text-sm text-onyx/85">{r.message}</p>}
           </div>
-          <BookingStatusForm id={r.id} status={r.status as BookingStatus} label={r.full_name} />
+          <div className="flex flex-col items-start gap-2">
+            <BookingStatusForm id={r.id} status={r.status as BookingStatus} label={r.full_name} />
+            {r.status !== "scheduled" && can(access, "agenda.write") && (
+              <Link href={`/studio/agenda?pedido=${r.id}`} className="text-sm text-olive underline decoration-gold underline-offset-4">Agendar este pedido</Link>
+            )}
+          </div>
         </li>
       ))}
     </ul>
