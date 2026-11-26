@@ -1,0 +1,30 @@
+# Desenvolvimento local.
+#   docker compose up web-dev      → Next.js em modo dev com hot reload (http://localhost:3000)
+#   docker compose up web          → imagem de produção
+# Banco/Auth/Storage locais: use a Supabase CLI (também baseada em Docker):
+#   npx supabase start   (lê supabase/config.toml e aplica supabase/migrations)
+services:
+  web-dev:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- -H 0.0.0.0"
+    ports: ["3000:3000"]
+    env_file: [.env.local]
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
+        CG_DEPLOY_ENV: local
+    ports: ["3000:3000"]
+
+volumes:
+  node_modules:
