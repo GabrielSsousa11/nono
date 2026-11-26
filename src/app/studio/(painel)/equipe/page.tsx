@@ -4,6 +4,7 @@ import { LoadingRows, StudioPageHeader } from "@/components/studio/page-header";
 import { InviteStaffForm, ResetMfaButton, RoleToggles } from "@/features/studio/team-forms";
 import { can, isStaffRole, type StaffRole } from "@/lib/auth/access";
 import { getSessionContext } from "@/lib/auth/session";
+import { isAuthAdminConfigured } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = { title: "Equipe e acessos" };
 
@@ -20,7 +21,7 @@ async function Team() {
   if (!can(access, "users.manage")) {
     return <p className="text-mist">Somente administradores gerenciam a equipe.</p>;
   }
-  const adminApiReady = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+  const adminApiReady = isAuthAdminConfigured();
 
   const { data, error } = await supabase!
     .from("user_roles")

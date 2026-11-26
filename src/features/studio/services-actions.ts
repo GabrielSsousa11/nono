@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { fail, ok, type ActionState } from "@/lib/action-state";
 import { requireStaff, rpcErrorMessage } from "@/lib/auth/guards";
-import { parseMoney, zonedToUtc } from "@/lib/datetime";
+import { parseMoney, zonedToUtc, isIsoDate } from "@/lib/datetime";
 
 const DENIED = fail("Você não tem permissão para esta ação.");
 const done = (msg: string) => {
@@ -148,9 +148,9 @@ export async function addBlock(_p: ActionState, fd: FormData): Promise<ActionSta
     .object({
       professionalId: z.union([z.literal(""), z.uuid()]),
       kind: z.enum(["holiday", "absence", "block"]),
-      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inicial inválida."),
+      startDate: z.string().refine(isIsoDate, "Data inicial inválida."),
       startTime: z.union([z.literal(""), time]),
-      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data final inválida."),
+      endDate: z.string().refine(isIsoDate, "Data final inválida."),
       endTime: z.union([z.literal(""), time]),
       reason: z.string().trim().max(200).optional(),
     })

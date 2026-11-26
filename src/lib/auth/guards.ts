@@ -88,6 +88,8 @@ export function rpcErrorMessage(
     "período inválido (máximo de 1 ano)",
     "pesquisa indisponível",
     "paciente não encontrado ou arquivado",
+    "este paciente já está vinculado a outra conta",
+    "o conteúdo do arquivo não corresponde ao formato informado",
     "informe o motivo da revogação",
   ];
   const hit = known.find((k) => m.includes(k));

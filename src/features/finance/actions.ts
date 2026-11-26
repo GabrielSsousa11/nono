@@ -5,9 +5,9 @@ import { z } from "zod";
 import { fail, ok, type ActionState } from "@/lib/action-state";
 import { requireStaff, rpcErrorMessage } from "@/lib/auth/guards";
 import { getSessionContext } from "@/lib/auth/session";
-import { parseMoney } from "@/lib/datetime";
+import { parseMoney, isIsoDate } from "@/lib/datetime";
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida.");
+const day = z.string().refine(isIsoDate, "Data inválida.");
 const refresh = () => {
   revalidatePath("/studio/financeiro");
   revalidatePath("/studio/pacientes", "layout");

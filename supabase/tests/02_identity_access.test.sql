@@ -133,6 +133,8 @@ select pg_temp.expect_error($q$ update public.patients set profile_id = '0000000
 select public.link_patient_account('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001');
 select public.link_patient_account('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002');
 select pg_temp.expect_error($q$ select public.link_patient_account('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000d') $q$, 'equipe');
+select pg_temp.expect_error($q$ select public.link_patient_account('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000099') $q$, 'já está vinculado');
+select public.link_patient_account('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002');
 select pg_temp.expect_error($q$ delete from public.patients $q$, 'permission denied');
 select pg_temp.expect_error($q$ truncate public.booking_requests $q$, 'permission denied');
 select pg_temp.logout();

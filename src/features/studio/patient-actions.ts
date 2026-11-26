@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { isIsoDate } from "@/lib/datetime";
 import { fail, ok, type ActionState } from "@/lib/action-state";
 import { requireStaff, rpcErrorMessage } from "@/lib/auth/guards";
 import { siteUrl } from "@/lib/env";
@@ -67,7 +68,7 @@ export async function addGuardian(_p: ActionState, fd: FormData): Promise<Action
       evidenceNote: z.string().trim().max(500).optional(),
       canViewClinical: z.string().optional(),
       canSchedule: z.string().optional(),
-      validUntil: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
+      validUntil: z.union([z.literal(""), z.string().refine(isIsoDate, "Data inválida.")]).optional(),
     })
     .safeParse(Object.fromEntries(fd));
   if (!v.success) return fail(v.error.issues[0]?.message ?? "Dados inválidos.");

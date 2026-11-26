@@ -8,6 +8,11 @@ import { publicEnv } from "@/lib/env";
  * (`auth.admin.inviteUserByEmail`), e SEMPRE depois de verificar a permissão de
  * quem pediu com a sessão dessa pessoa. Nunca usar para ler ou gravar tabelas.
  */
+/** A API administrativa de Auth está configurada neste ambiente? (sem expor a chave) */
+export function isAuthAdminConfigured(): boolean {
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+}
+
 export function createAuthAdminClient(): SupabaseClient["auth"]["admin"] | null {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!publicEnv.NEXT_PUBLIC_SUPABASE_URL || !key) return null;

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidCpf } from "@/lib/cpf";
+import { localDate, isIsoDate } from "@/lib/datetime";
 
 const optionalText = (max: number) =>
   z
@@ -13,13 +14,10 @@ export const patientSchema = z.object({
   fullName: z.string().trim().min(3, "Informe o nome completo.").max(120),
   socialName: optionalText(120),
   birthDate: z
-    .union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)])
+    .union([z.literal(""), z.string().refine(isIsoDate, "Data inválida.")])
     .optional()
     .transform((v) => (v ? v : null))
-    .refine(
-      (v) => !v || (v > "1900-01-01" && v <= new Date().toISOString().slice(0, 10)),
-      "Data de nascimento inválida.",
-    ),
+    .refine((v) => !v || (v > "1900-01-01" && v <= localDate(new Date())), "Data de nascimento inválida."),
   cpf: z
     .string()
     .trim()

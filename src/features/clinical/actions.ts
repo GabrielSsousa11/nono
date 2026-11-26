@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { fail, ok, type ActionState } from "@/lib/action-state";
 import { requireStaff, rpcErrorMessage } from "@/lib/auth/guards";
+import { localDate, isIsoDate } from "@/lib/datetime";
 import { isValidFdi } from "./teeth";
 
 const DENIED = fail("Somente a equipe clínica com verificação em duas etapas pode registrar.");
@@ -13,7 +14,7 @@ const refresh = (patientId: string) => {
   revalidatePath("/portal", "layout");
 };
 const uuid = z.uuid();
-const date = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional();
+const date = z.union([z.literal(""), z.string().refine(isIsoDate, "Data inválida.")]).optional();
 
 export async function addClinicalRecord(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("clinical.write");
@@ -218,6 +219,15 @@ export async function updateStage(_p: ActionState, fd: FormData): Promise<Action
   return ok("Etapa atualizada.");
 }
 
+/** Confere os primeiros bytes: o tipo informado pelo navegador pode ser forjado. */
+function matchesSignature(b: Uint8Array, ext: "jpg" | "png" | "webp" | "pdf"): boolean {
+  const at = (i: number, ...v: number[]) => v.every((x, k) => b[i + k] === x);
+  if (ext === "jpg") return at(0, 0xff, 0xd8, 0xff);
+  if (ext === "png") return at(0, 0x89, 0x50, 0x4e, 0x47);
+  if (ext === "pdf") return at(0, 0x25, 0x50, 0x44, 0x46);
+  return at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50);
+}
+
 const ALLOWED = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf" } as const;
 
 export async function uploadClinicalFile(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -257,6 +267,9 @@ export async function uploadClinicalFile(_p: ActionState, fd: FormData): Promise
       return fail("Paciente sem consentimento ativo para fotografias clínicas. Registre o consentimento antes.");
   }
 
+  if (!matchesSignature(new Uint8Array(await file.slice(0, 12).arrayBuffer()), ext))
+    return fail("O conteúdo do arquivo não corresponde ao formato informado.");
+
   const path = `${v.data.patientId}/${crypto.randomUUID()}.${ext}`;
   const bucket = v.data.target === "photo" ? "clinical-photos" : "documents";
   const { error: upErr } = await ctx.supabase.storage
@@ -269,7 +282,7 @@ export async function uploadClinicalFile(_p: ActionState, fd: FormData): Promise
       ? await ctx.supabase.from("clinical_photos").insert({
           patient_id: v.data.patientId,
           storage_path: path,
-          taken_on: v.data.takenOn || new Date().toISOString().slice(0, 10),
+          taken_on: v.data.takenOn || localDate(new Date()),
           view_label: v.data.viewLabel || null,
           professional_notes: v.data.notes || null,
           visible_to_patient: v.data.visible === "on",

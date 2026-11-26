@@ -7,7 +7,7 @@ import { completeMission, logHabit } from "@/features/daily/actions";
 import { BrushingTimer } from "@/features/daily/brushing-timer";
 import { Flame } from "@/features/daily/flame";
 import { requirePortal } from "@/lib/auth/guards";
-import { addDays, fmtPlainDate, weekday } from "@/lib/datetime";
+import { addDays, fmtPlainDate, localDate, weekday } from "@/lib/datetime";
 
 export const metadata: Metadata = { title: "CG Daily" };
 
@@ -46,7 +46,7 @@ async function Content() {
       .from("brushing_logs")
       .select("local_date, kind")
       .eq("patient_id", pid)
-      .gte("local_date", addDays(new Date().toISOString().slice(0, 10), -60)),
+      .gte("local_date", addDays(localDate(new Date()), -60)),
   ]);
   const s = sum.data as Summary | null;
   if (!s) return <Empty>Não foi possível carregar o CG Daily.</Empty>;

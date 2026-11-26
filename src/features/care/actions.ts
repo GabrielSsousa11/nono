@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import QRCode from "qrcode";
 import { z } from "zod";
+import { isIsoDate } from "@/lib/datetime";
 import { fail, ok, type ActionState } from "@/lib/action-state";
 import { requireStaff, rpcErrorMessage } from "@/lib/auth/guards";
 import { getSessionContext } from "@/lib/auth/session";
 import { siteUrl } from "@/lib/env";
 
-const date = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional();
+const date = z.union([z.literal(""), z.string().refine(isIsoDate, "Data inválida.")]).optional();
 
 export async function saveProtocol(_p: ActionState, fd: FormData): Promise<ActionState> {
   const ctx = await requireStaff("care.manage");

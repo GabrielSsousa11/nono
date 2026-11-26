@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { isIsoDate } from "@/lib/datetime";
 import { fail, ok, type ActionState } from "@/lib/action-state";
 import { requireStaff, rpcErrorMessage } from "@/lib/auth/guards";
 import { getSessionContext } from "@/lib/auth/session";
@@ -19,7 +20,7 @@ export async function getSlots(
   day: string,
 ): Promise<{ slots: string[]; error?: string }> {
   const v = z
-    .object({ p: z.uuid(), s: z.uuid(), d: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
+    .object({ p: z.uuid(), s: z.uuid(), d: z.string().refine(isIsoDate, "Data inválida.") })
     .safeParse({ p: professionalId, s: serviceId, d: day });
   if (!v.success) return { slots: [], error: "Escolha serviço, profissional e data." };
   const { supabase, user } = await getSessionContext();
@@ -156,7 +157,7 @@ export async function joinWaitingList(_p: ActionState, fd: FormData): Promise<Ac
       serviceId: z.uuid("Escolha o serviço."),
       professionalId: z.union([z.literal(""), z.uuid()]).optional(),
       period: z.enum(["any", "morning", "afternoon", "evening"]).default("any"),
-      latest: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
+      latest: z.union([z.literal(""), z.string().refine(isIsoDate, "Data inválida.")]).optional(),
       notes: z.string().trim().max(300).optional(),
     })
     .safeParse(Object.fromEntries(fd));
