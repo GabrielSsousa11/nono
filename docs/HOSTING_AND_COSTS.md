@@ -33,7 +33,16 @@ Região: escolher **São Paulo (sa-east-1)** para reduzir transferência interna
 O SMTP padrão do Supabase tem limites baixos e é só para testes. Produção precisa de SMTP próprio (há provedores com
 camada gratuita). WhatsApp Business API é paga por conversa — fica como integração opcional (Fase 9).
 
-## Recomendação (decisão pendente da clínica)
+## Decisão registrada (26/11/2026)
+
+A responsável pelo projeto autorizou **apenas serviços gratuitos**, ciente das limitações. Consequências:
+
+- Supabase Free: sem backups gerenciados, pausa por inatividade, limites de armazenamento. Adequado para
+  **apresentação e homologação com dados sintéticos**. Antes de dados reais de pacientes, esta decisão deve ser revista.
+- Hospedagem gratuita para a demonstração (ver `docs/DEPLOY.md`).
+- Integrações pagas (WhatsApp Business API, SMS) permanecem como módulos opcionais desligados.
+
+## Recomendação original (para operação real)
 
 1. Agora: Supabase Free para homologação **apenas com dados sintéticos**.
 2. Antes de dados reais: Supabase Pro em sa-east-1 + hospedagem comercial (Vercel Pro, Cloudflare ou VPS) +
