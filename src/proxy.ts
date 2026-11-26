@@ -1,0 +1,46 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+
+/**
+ * Renova a sessão do Supabase nas rotas autenticadas. As páginas públicas
+ * ficam fora do matcher para continuarem estáticas e rápidas.
+ */
+export async function proxy(request: NextRequest) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  let response = NextResponse.next({ request });
+  if (!url || !key) return response;
+
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (toSet) => {
+        for (const { name, value } of toSet) request.cookies.set(name, value);
+        response = NextResponse.next({ request });
+        for (const { name, value, options } of toSet) response.cookies.set(name, value, options);
+      },
+    },
+  });
+
+  // Valida o token com o servidor de autenticação (não confiar apenas no cookie).
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const protectedArea = ["/portal", "/studio", "/continuar"].some((p) => request.nextUrl.pathname.startsWith(p));
+  if (!user && protectedArea) {
+    const login = request.nextUrl.clone();
+    login.pathname = "/entrar";
+    login.search = "";
+    const redirect = NextResponse.redirect(login);
+    redirect.headers.set("Cache-Control", "private, no-store");
+    return redirect;
+  }
+
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
+export const config = {
+  matcher: ["/portal/:path*", "/studio/:path*", "/continuar", "/auth/:path*"],
+};

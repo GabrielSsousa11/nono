@@ -1,0 +1,279 @@
+@import "tailwindcss";
+
+/*
+ * Design system — Charlene Gonçalves Odontologia · "Beyond the Smile"
+ * Tokens da marca. Não usar cores fora desta lista sem registrar em docs/DECISIONS.md.
+ *
+ * Contraste (WCAG 2.2):
+ *  - onyx sobre ivory ............ 14.3:1  (texto)
+ *  - olive sobre ivory ........... 8.1:1   (texto)
+ *  - mist sobre ivory ............ 5.5:1   (texto secundário)
+ *  - gold-ink sobre ivory ........ 5.1:1   (texto pequeno permitido; NÃO usar sobre stone: 4.36:1)
+ *  - gold sobre ivory ............ 2.5:1   (APENAS decorativo / ornamentos)
+ *  - ivory sobre olive ........... 8.1:1
+ *  - champagne sobre olive ....... 5.3:1
+ *  - gold sobre olive ............ 3.3:1   (apenas texto ≥ 24px)
+ *  - gold sobre onyx ............. 5.8:1
+ */
+@theme {
+  --color-ivory: #f7f4ed;
+  --color-porcelain: #fbf9f4;
+  --color-champagne: #d5c6b2;
+  --color-gold: #b29a70;
+  --color-gold-ink: #7a6542;
+  --color-olive: #414d40;
+  --color-olive-deep: #343e33;
+  --color-onyx: #202420;
+  --color-stone: #e9e3d7;
+  --color-mist: #5d655b;
+  --color-danger: #8a2f24;
+
+  --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-manrope), "Manrope", system-ui, sans-serif;
+
+  /* Escala tipográfica — quarta justa (1.333) sobre base 17px */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.6;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.7;
+  --text-lg: 1.333rem;
+  --text-lg--line-height: 1.55;
+  --text-xl: 1.777rem;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 2.369rem;
+  --text-2xl--line-height: 1.15;
+  --text-3xl: 3.157rem;
+  --text-3xl--line-height: 1.05;
+
+  --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-porcelain: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --breakpoint-xs: 26rem;
+}
+
+:root {
+  color-scheme: light;
+  --paper-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.25  0 0 0 0 0.22  0 0 0 0 0.17  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --stone-vein: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='v'><feTurbulence type='turbulence' baseFrequency='.004 .018' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.84  0 0 0 0 0.78  0 0 0 0 0.70  0 0 0 -1.6 1.15'/></filter><rect width='100%' height='100%' filter='url(%23v)'/></svg>");
+  --header-h: 4.5rem;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--header-h);
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-onyx);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Textura de papel — fixa, sutil, não interfere em leitura. */
+.paper {
+  position: relative;
+  isolation: isolate;
+}
+.paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--paper-grain);
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+}
+
+/* Veio de pedra para superfícies em oliva/ônix. */
+.stone {
+  position: relative;
+  isolation: isolate;
+}
+.stone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--stone-vein);
+  background-size: 600px 600px;
+  opacity: 0.035;
+}
+
+.font-display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  font-feature-settings: "liga", "dlig", "kern";
+}
+
+/* Foco visível e consistente em toda a interface. */
+:focus-visible {
+  outline: 2px solid var(--color-gold-ink);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.on-dark :focus-visible,
+.on-dark:focus-visible {
+  outline-color: var(--color-champagne);
+}
+
+::selection {
+  background: var(--color-champagne);
+  color: var(--color-onyx);
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--color-onyx);
+  color: var(--color-ivory);
+  transition: top 0.2s var(--ease-silk);
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Fio dourado — único ornamento recorrente; marca início de conteúdo editorial. */
+.gold-rule {
+  display: block;
+  height: 1px;
+  width: 4.5rem;
+  background: linear-gradient(90deg, var(--color-gold), transparent);
+}
+
+dialog::backdrop {
+  background: rgb(32 36 32 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Coreografia do hero — CSS puro, executa antes da hidratação.               */
+/* -------------------------------------------------------------------------- */
+@keyframes line-rise {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes soft-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes porcelain-rise {
+  from {
+    opacity: 0;
+    transform: translateY(2.5%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes menu-in {
+  from {
+    transform: translateX(8%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.hero-line {
+  animation: line-rise 1.1s var(--ease-silk) both;
+}
+.hero-fade {
+  animation: soft-fade 1s var(--ease-silk) both;
+}
+.hero-rise {
+  animation: porcelain-rise 1.8s var(--ease-silk) both;
+}
+
+/* Linha da jornada: desenha-se com a rolagem onde houver scroll-driven animations. */
+.journey-track::before,
+.journey-track::after {
+  content: "";
+  position: absolute;
+  left: calc(1.5rem - 0.5px);
+  top: 1.5rem;
+  bottom: 2rem;
+  width: 1px;
+  background: var(--color-champagne);
+}
+.journey-track::after {
+  background: var(--color-olive);
+  transform-origin: top;
+  transform: scaleY(1);
+}
+@media (min-width: 40rem) {
+  .journey-track::before,
+  .journey-track::after {
+    left: calc(1.75rem - 0.5px);
+  }
+}
+@keyframes draw-down {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .journey-track::after {
+      animation: draw-down linear both;
+      animation-timeline: view();
+      animation-range: entry 10% contain 70%;
+    }
+  }
+}
+
+/* CG Daily — foguinho da sequência */
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  33% {
+    transform: scale(1.04, 0.97) rotate(-1.5deg);
+  }
+  66% {
+    transform: scale(0.98, 1.03) rotate(1.5deg);
+  }
+}
+.flame {
+  transform-origin: 50% 90%;
+  animation: flicker 1.6s ease-in-out infinite;
+}

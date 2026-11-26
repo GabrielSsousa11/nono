@@ -1,56 +1,47 @@
-# EMPIRE TYCOON
+# Charlene Gonçalves Odontologia — Beyond the Smile
 
-Jogo 3D de estratégia e gestão empresarial para Android (Unity 6 · C# · URP).
-O jogador começa com uma pequena empresa e um terreno em uma cidade e cresce até um conglomerado internacional.
+Plataforma digital da clínica: site institucional, portal do paciente e (nas próximas fases) o painel CG Studio.
 
-> **Status: Fases 1 e 2 concluídas (aguardando validação no Unity).**
-> Abra o projeto, aperte Play: tela inicial sobre a cidade 3D → novo jogo ou continuar. Selecione terrenos,
-> compre, venda, construa, melhore e demola estabelecimentos, com custos e impostos reais. A cidade cresce
-> sozinha, bairros valorizam, e o jogo salva automaticamente (com backups e recuperação).
-> Veja [Docs/ROADMAP.md](Docs/ROADMAP.md) para o que foi entregue e o que falta.
+**Estado:** fases 1 a 12 implementadas e testadas; pronta para publicação gratuita de demonstração ([docs/DEPLOY.md](docs/DEPLOY.md)). Conteúdo oficial da clínica e validação num projeto Supabase real pendentes.
 
 ## Início rápido
 
-1. Instale o **Unity 6 LTS (6000.0.x)** pelo Unity Hub, com o módulo **Android Build Support** (inclui SDK/NDK/OpenJDK).
-2. Unity Hub → *Add project from disk* → selecione esta pasta.
-3. Na primeira abertura o projeto se configura sozinho (URP, presets de qualidade, material-modelo, cena na build,
-   Player Settings do Android). Para repetir: menu **Empire Tycoon → Configurar Projeto**.
-4. Abra `Assets/_Project/Scenes/Main.unity` e aperte **Play**.
-
-Detalhes, problemas comuns e build Android: [Docs/SETUP.md](Docs/SETUP.md).
-
-## Controles
-
-| Ação | Toque | Mouse/Teclado |
-|---|---|---|
-| Mover câmera | arrastar 1 dedo | arrastar botão esquerdo/meio · WASD/setas |
-| Zoom | pinça | roda do mouse · `+`/`-` |
-| Girar | girar 2 dedos | arrastar botão direito · `Q`/`E` |
-| Selecionar terreno | tocar | clicar |
-| Fechar/voltar · menu de pausa | botão voltar do Android | `Esc` |
-
-## Testes
-
-A simulação econômica é C# puro (sem Unity) e é testada de duas formas, com **os mesmos arquivos de teste**:
-
-- Na Unity: *Window → General → Test Runner → EditMode → Run All*.
-- Fora da Unity (CI ou terminal): `dotnet test Tools/SimulationTests` (requer .NET 8 SDK).
-  Inclui validação dos dados reais do jogo (assets) e um relatório de balanceamento:
-  `dotnet test Tools/SimulationTests --filter BalanceReport --logger "console;verbosity=detailed"`.
-
-## Estrutura
-
-```
-Assets/_Project/
-  Scripts/Simulation/   Núcleo do jogo em C# puro (economia, cidade, construção, saves). Sem dependência da Unity.
-  Scripts/Runtime/      Camada Unity: bootstrap, câmera, entrada, renderização 3D, interface.
-  Scripts/Editor/       Configuração automática do projeto e scripts de build.
-  Tests/EditMode/       Testes NUnit da simulação.
-  Data/                 ScriptableObjects (tipos de edifício).
-  Resources/            GameDatabase (configuração da partida e catálogo).
-  Scenes/Main.unity     Cena principal.
-Docs/                   Arquitetura, roadmap, setup, pipeline de arte.
-Tools/                  Testes fora da Unity e utilitários (geração de .meta).
+```bash
+cp .env.example .env.local      # opcional: preencha o Supabase para ativar pedidos e login
+npm install
+npm run dev:fixtures            # todas as seções com dados SINTÉTICOS (somente desenvolvimento)
+npm run dev                     # conteúdo oficial (seções sem dados ficam pendentes)
 ```
 
-Arquitetura e decisões técnicas: [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md).
+Requisitos: Node 22.12+. Para `npm run test:db`, binários do PostgreSQL (`initdb`, `pg_ctl`, `psql`).
+
+### Backend local (opcional)
+
+```bash
+npx supabase start              # requer Docker; aplica supabase/migrations
+# copie a API URL e a chave publishable exibidas para .env.local
+```
+
+## Verificação
+
+```bash
+npm run verify      # lint + typecheck + testes unitários + testes de banco + build
+npm run test:e2e    # Playwright (desktop e mobile) contra o build de produção
+npm run content:check
+```
+
+## Documentação
+
+- [CLAUDE.md](CLAUDE.md) — regras permanentes do projeto
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DECISIONS.md](docs/DECISIONS.md)
+- [docs/SECURITY_LGPD.md](docs/SECURITY_LGPD.md) · [docs/HOSTING_AND_COSTS.md](docs/HOSTING_AND_COSTS.md)
+- [docs/CONTENT_VERIFICATION.md](docs/CONTENT_VERIFICATION.md) · [docs/DEPLOY.md](docs/DEPLOY.md) (publicação gratuita e roteiro de apresentação)
+
+## Prévia (dados sintéticos de desenvolvimento)
+
+| Hero (desktop)                                      | Hero (mobile)                                     |
+| --------------------------------------------------- | ------------------------------------------------- |
+| ![Hero desktop](docs/screenshots/hero-desktop.webp) | ![Hero mobile](docs/screenshots/hero-mobile.webp) |
+
+![Tratamentos](docs/screenshots/tratamentos-desktop.webp)
+![Portal](docs/screenshots/portal-desktop.webp)

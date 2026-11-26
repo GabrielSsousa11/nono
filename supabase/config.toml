@@ -1,0 +1,30 @@
+# Configuração mínima para a Supabase CLI local (`npx supabase start`).
+# Valores omitidos usam os padrões da CLI.
+project_id = "charlene-goncalves"
+
+[api]
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+major_version = 16
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/confirm"]
+# Contas são criadas pela clínica; cadastro público desabilitado.
+enable_signup = false
+jwt_expiry = 3600
+
+[auth.email]
+enable_signup = false
+double_confirm_changes = true
+enable_confirmations = true
+otp_expiry = 900
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[storage]
+file_size_limit = "15MiB"
