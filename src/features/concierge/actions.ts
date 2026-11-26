@@ -67,21 +67,24 @@ async function buildContext(): Promise<ConciergeContext> {
     professional_services: { professional_id: string }[];
   }[];
   if (services.length && !ctx.services.length) ctx.services = services.map((s) => ({ name: s.name }));
-  const slots: { service: string; when: string }[] = [];
   const today = localDate(new Date());
-  for (const s of services) {
-    const pro = s.professional_services[0]?.professional_id;
-    if (!pro) continue;
-    for (let d = 0; d < 7 && slots.length < 4; d++) {
-      const { data } = await portal.supabase.rpc("available_slots", {
-        p_professional: pro,
-        p_service: s.id,
-        p_day: addDays(today, d),
-      });
-      const first = ((data ?? []) as { starts_at: string }[])[0];
-      if (first) slots.push({ service: s.name, when: `${fmtDateLong(first.starts_at)}, ${fmtTime(first.starts_at)}` });
-    }
-  }
+  // Em paralelo: serviços × próximos 7 dias (antes eram até 21 chamadas em série).
+  const found = await Promise.all(
+    services.flatMap((s) => {
+      const pro = s.professional_services[0]?.professional_id;
+      if (!pro) return [];
+      return Array.from({ length: 7 }, (_, d) =>
+        portal.supabase
+          .rpc("available_slots", { p_professional: pro, p_service: s.id, p_day: addDays(today, d) })
+          .then(({ data }) => ({ service: s.name, first: ((data ?? []) as { starts_at: string }[])[0]?.starts_at, d })),
+      );
+    }),
+  );
+  const slots = found
+    .filter((f) => f.first)
+    .sort((a, b) => a.first!.localeCompare(b.first!))
+    .slice(0, 4)
+    .map((f) => ({ service: f.service, when: `${fmtDateLong(f.first!)}, ${fmtTime(f.first!)}` }));
   ctx.openSlots = slots;
   return ctx;
 }

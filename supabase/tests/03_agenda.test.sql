@@ -155,6 +155,15 @@ select pg_temp.login('00000000-0000-0000-0000-000000000002', 'aal1');
 select pg_temp.expect_error($q$ select public.set_appointment_status((select id from public.appointments where source = 'waitlist'), 'cancelled', 'teste') $q$, 'em cima da hora');
 select pg_temp.logout();
 
+-- 7b. Remarcar pelo portal também respeita antecedência mínima e janela máxima
+select pg_temp.login('00000000-0000-0000-0000-00000000000a');
+update public.clinic_settings set value = '0' where key = 'agenda.cancel_notice_hours';
+update public.clinic_settings set value = '100000' where key = 'agenda.min_notice_hours';
+select pg_temp.logout();
+select pg_temp.login('00000000-0000-0000-0000-000000000002', 'aal1');
+select pg_temp.expect_error($q$ select public.reschedule_appointment((select id from public.appointments where source = 'waitlist'), now() + interval '30 days') $q$, 'antecedência mínima');
+select pg_temp.logout();
+
 -- 8. Notificações: só as próprias; não pode criar
 select pg_temp.login('00000000-0000-0000-0000-000000000002', 'aal1');
 select pg_temp.assert((select count(*) from public.notifications where recipient_id <> '00000000-0000-0000-0000-000000000002') = 0, 'só as próprias notificações');

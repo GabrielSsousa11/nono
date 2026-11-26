@@ -35,6 +35,10 @@ test.describe("todas as páginas do Studio abrem (administradora com MFA)", () =
       expect(res?.status()).toBeLessThan(400);
       await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
       await expect(page.getByText(/Application error|Unhandled Runtime Error/)).toHaveCount(0);
+      const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+      expect(axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`)).toEqual([]);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow, "rolagem horizontal").toBeLessThanOrEqual(0);
     });
   }
 
@@ -53,6 +57,11 @@ test.describe("todas as páginas do portal abrem (paciente)", () => {
       const res = await page.goto(path);
       expect(res?.status()).toBeLessThan(400);
       await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+      await page.waitForLoadState("networkidle");
+      const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+      expect(axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`)).toEqual([]);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow, "rolagem horizontal").toBeLessThanOrEqual(0);
     });
   }
 

@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { can, type AccessInfo, type Permission } from "./access";
 import { getSessionContext } from "./session";
 
@@ -28,7 +29,10 @@ export interface PatientPortalContext {
 }
 
 /** Portal: pacientes que a pessoa pode acompanhar (ela mesma + dependentes) e o selecionado. */
-export async function requirePortal(selected?: string | null): Promise<PatientPortalContext | null> {
+/** Uma consulta por requisição (layout e página compartilham o resultado). */
+export const requirePortal = cache(loadPortal);
+
+async function loadPortal(selected?: string | null): Promise<PatientPortalContext | null> {
   const ctx = await getSessionContext();
   if (selected === undefined) selected = (await cookies()).get(PORTAL_PATIENT_COOKIE)?.value ?? null;
   if (!ctx.supabase || !ctx.user) return null;
